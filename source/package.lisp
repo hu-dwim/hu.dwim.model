@@ -15,4 +15,5 @@
         :hu.dwim.meta-model
         :hu.dwim.perec
         :hu.dwim.syntax-sugar
-        :hu.dwim.util))
+        :hu.dwim.util
+        :local-time))

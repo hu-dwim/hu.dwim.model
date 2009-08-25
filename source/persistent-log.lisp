@@ -80,7 +80,7 @@
                               message)))
 
 (def function format-persistent-log-message (message &rest args)
-  (with-locale "en"
+  (cl-l10n:with-locale "en"
     (bind ((processed-args (mapcar (lambda (arg)
                                      (typecase arg
                                        (persistent-object
