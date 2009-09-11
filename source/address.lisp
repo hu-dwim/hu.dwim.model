@@ -11,7 +11,7 @@
 
 (def entity public-place ()
   ((name :type standard-text :primary #t :reference #t)
-   (long-name :type standard-text :compute-as (concatenate-string)))) ;; TODO:
+   (long-name :type standard-text :compute-as (string+)))) ;; TODO:
 
 (def association
   ((:class public-place-type :slot public-places :type (set public-place))
@@ -60,7 +60,7 @@
     ;; TODO these slobops shouldn't be needed, fix slots instead
     (bind ((public-place (when (slot-boundp address 'public-place) (public-place-of address)))
            (settlement (when (slot-boundp public-place 'settlement) (settlement-of public-place))))
-      (concatenate-string (when public-place
+      (string+ (when public-place
                             (name-of public-place))
                           " "
                           (when public-place
@@ -75,7 +75,7 @@
   (full-address (address)
     (bind ((public-place (public-place-of address))
            (settlement (settlement-of public-place)))
-      (concatenate-string (name-of public-place)
+      (string+ (name-of public-place)
                           " "
                           (name-of (public-place-type-of public-place))
                           " "
@@ -104,7 +104,7 @@
     ;; TODO these slobops shouldn't be needed, fix slots instead
     (bind ((public-place (when (slot-boundp address 'public-place) (public-place-of address)))
            (settlement (when (slot-boundp public-place 'settlement) (settlement-of public-place))))
-      (concatenate-string (name-of settlement)
+      (string+ (name-of settlement)
                           ", "
                           (when public-place
                             (name-of public-place))
@@ -118,7 +118,7 @@
   (full-address (address)
     (bind ((public-place (public-place-of address))
            (settlement (settlement-of public-place)))
-      (concatenate-string (name-of (country-of (county-of settlement)))
+      (string+ (name-of (country-of (county-of settlement)))
                           " "
                           (princ-to-string (zip-code-of settlement))
                           " "
