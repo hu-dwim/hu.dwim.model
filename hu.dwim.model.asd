@@ -15,13 +15,16 @@
            "Tamás Borbély <tomi.borbely@gmail.com>")
   :licence "BSD / Public domain"
   :description "Various model fragments"
-  :depends-on (:hu.dwim.common-lisp
-               :hu.dwim.def
+  :depends-on (:cl-ppcre
+               :hu.dwim.common-lisp
+               :hu.dwim.def+cl-l10n
                :hu.dwim.defclass-star
+               :hu.dwim.logger
                :hu.dwim.meta-model
+               :hu.dwim.perec
                :hu.dwim.syntax-sugar+hu.dwim.walker
                :hu.dwim.util
-               :hu.dwim.walker)
+               :local-time)
   :components ((:module "source"
                 :components ((:file "address" :depends-on ("settlement" "public-place-type"))
                              (:file "attachment" :depends-on ("audited-object"))
