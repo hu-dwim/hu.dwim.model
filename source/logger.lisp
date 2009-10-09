@@ -6,4 +6,4 @@
 
 (in-package :hu.dwim.model)
 
-(def logger log ())
+(def logger model ())

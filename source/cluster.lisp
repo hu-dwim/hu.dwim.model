@@ -6,7 +6,7 @@
 
 (in-package :hu.dwim.model)
 
-(def logger cluster (log))
+(def logger cluster (model))
 
 ;;;;;;
 ;;; Model

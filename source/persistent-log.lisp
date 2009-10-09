@@ -66,10 +66,10 @@
 ;;;;;;
 ;;; Functional
 
-(def (class e) persistent-log-appender (log-appender)
+(def (class e) persistent-appender (appender)
   ())
 
-(def method append-message (category (appender persistent-log-appender) message level)
+(def method append-message (category (appender persistent-appender) message level)
   (assert (symbolp level))
   ;; TODO there should be some assert that we are not in a read-only/rollback-only transaction
   (make-instance 'persistent-log-entry
@@ -117,7 +117,7 @@
     (push (subseq message last-end) result)
     (nreverse result)))
 
-(bind ((persistent-appender (make-instance 'persistent-log-appender)))
+(bind ((persistent-appender (make-instance 'persistent-appender)))
   (flet ((setup (logger-name)
            (bind ((logger (find-logger logger-name)))
              (push persistent-appender (appenders-of logger))
