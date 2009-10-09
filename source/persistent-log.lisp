@@ -120,7 +120,7 @@
 (bind ((persistent-appender (make-instance 'persistent-appender)))
   (flet ((setup (logger-name)
            (bind ((logger (find-logger logger-name)))
-             (push persistent-appender (appenders-of logger))
+             (push persistent-appender (hu.dwim.logger::appenders-of logger))
              (setf (log-level logger) +dribble+))))
     (setup 'audit)
     (setup 'login)))
