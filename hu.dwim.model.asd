@@ -17,7 +17,7 @@
   :description "Various model fragments"
   :depends-on (:cl-ppcre
                :cl-base64
-               :hu.dwim.common-lisp
+               :hu.dwim.common
                :hu.dwim.def+cl-l10n
                :hu.dwim.defclass-star
                :hu.dwim.logger
