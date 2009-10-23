@@ -1,0 +1,13 @@
+/* cluster */
+
+.restart-cluster-node.icon {
+  background-image: url("/static/wui/icon/20x20/vcr-play.png");
+}
+
+.startup-cluster-node.icon {
+  background-image: url("/static/wui/icon/20x20/vcr-play.png");
+}
+
+.shutdown-cluster-node.icon {
+  background-image: url("/static/wui/icon/20x20/stop-sign.png");
+}
