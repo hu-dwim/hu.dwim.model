@@ -36,10 +36,7 @@
     (create-counties (find-symbol (string-upcase country-code) :hu.dwim.model) counties))
 
   (:method ((country persistent-object) &optional counties)
-    (bind ((variable-name (concatenate-symbol (find-package :hu.dwim.model)
-                                              "*"
-                                              (code-of country)
-                                              "-county-data*")))
+    (bind ((variable-name (format-symbol :hu.dwim.model "*~A-COUNTY-DATA*" (code-of country))))
       (dolist (data (or counties (symbol-value variable-name)))
         (make-county :name (pop data) :country country)))))
 

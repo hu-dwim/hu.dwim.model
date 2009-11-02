@@ -11,8 +11,7 @@
 
 (def function create-public-place-types (country-code &optional public-place-types)
   (dolist (data (or public-place-types
-                    (symbol-value (concatenate-symbol (find-package :hu.dwim.model)
-                                                      "*" country-code "-public-place-type-data*"))))
+                    (symbol-value (format-symbol (find-package :hu.dwim.model) "*~A-PUBLIC-PLACE-TYPE-DATA*" country-code))))
     (make-public-place-type :name (pop data))))
 
 (def function create-hu-public-place-types ()
