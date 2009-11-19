@@ -4,9 +4,9 @@
 ;;;
 ;;; See LICENCE for details.
 
-(in-package :common-lisp-user)
+(in-package :hu.dwim.util)
 
-(defpackage :hu.dwim.model
+(def package :hu.dwim.model
   (:use :hu.dwim.asdf
         :hu.dwim.common
         :hu.dwim.def
@@ -16,4 +16,7 @@
         :hu.dwim.perec
         :hu.dwim.syntax-sugar
         :hu.dwim.util
-        :local-time))
+        :local-time)
+  (:readtable-setup
+   (enable-standard-hu.dwim-syntaxes)
+   (hu.dwim.syntax-sugar:enable-lambda-with-bang-args-syntax)))

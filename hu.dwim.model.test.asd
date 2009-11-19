@@ -15,8 +15,8 @@
            "Tamás Borbély <tomi.borbely@gmail.com>")
   :licence "BSD / Public domain"
   :description "Test suite for hu.dwim.model"
-  :depends-on (:hu.dwim.def+hu.dwim.stefil
-               :hu.dwim.model)
+  :depends-on (:hu.dwim.model
+               :hu.dwim.util.test)
   :components ((:module "test"
                 :components ((:file "package")
                              (:file "suite" :depends-on ("package"))))))
