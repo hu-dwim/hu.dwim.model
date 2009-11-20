@@ -258,7 +258,7 @@
       (zm)
       (zw))))
 
-(def ptype country-code ()
+(def persistent-type country-code ()
   `(member ,@(mapcar 'first *country-data*)))
 
 (def entity country ()
