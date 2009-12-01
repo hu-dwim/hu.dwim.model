@@ -16,6 +16,7 @@
         :hu.dwim.perec
         :hu.dwim.syntax-sugar
         :hu.dwim.util
+        :hu.dwim.wui
         :local-time)
   (:readtable-setup
    (enable-standard-hu.dwim-syntaxes)
