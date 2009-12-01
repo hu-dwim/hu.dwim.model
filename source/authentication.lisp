@@ -91,7 +91,7 @@
                       :password "{sha256,salt,1000}fjFsdg3WjGGfsd6qdjyhdggg3g3452HjkyxTk5loalo="
                       :subject subject))
       ((length= 1 candidates)
-       (first-element candidates))
+       (first-elt candidates))
       (t
        (error "Subject ~A has multiple encrypted-password-authentication-instrument's when ensure-encrypted-password-authentication-instrument was called" subject)))))
 
