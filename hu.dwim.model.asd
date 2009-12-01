@@ -18,9 +18,9 @@
                :hu.dwim.defclass-star
                :hu.dwim.logger
                :hu.dwim.meta-model
-               :hu.dwim.perec
                :hu.dwim.syntax-sugar+hu.dwim.walker
                :hu.dwim.util.all
+               :hu.dwim.wui+hu.dwim.perec
                :local-time)
   :components ((:module "source"
                 :components ((:file "address" :depends-on ("settlement" "public-place-type"))
