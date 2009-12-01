@@ -10,11 +10,7 @@
 
 (defsystem :hu.dwim.model
   :class hu.dwim.system
-  :author ("Attila Lendvai <attila.lendvai@gmail.com>"
-           "Levente Mészáros <levente.meszaros@gmail.com>"
-           "Tamás Borbély <tomi.borbely@gmail.com>")
-  :licence "BSD / Public domain"
-  :description "Various model fragments"
+  :description "Various reusable model fragments."
   :depends-on (:cl-ppcre
                :cl-base64
                :hu.dwim.common
