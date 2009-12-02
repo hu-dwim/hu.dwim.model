@@ -20,7 +20,7 @@
 
 (def entity encrypted-password-authentication-instrument (authentication-instrument)
   ((password :type (text 64))
-   (salt (random-string +password-salt-length+) :type (text #.+password-salt-length+ #.+password-salt-length+))
+   (salt (hu.dwim.meta-model::random-string +password-salt-length+) :type (text #.+password-salt-length+ #.+password-salt-length+))
    (password-expires-at :type (or null date)))
   (:documentation "A jelszavas azonosító eszköz egy a felhasználó által megadott jelszót tárol. Az eltárolt információból a jelszó nem kikövetkeztethető, de egy megadott jelszóra nézve ellenőrizhető, hogy az megegyezik-e az eredetileg megadottal."))
 
