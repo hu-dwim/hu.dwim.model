@@ -64,10 +64,10 @@
 ;;; Functional
 
 (def (function e) digest-password-with-sha256 (password-string &optional salt)
-  (bind ((digest (ironclad:digest-sequence :sha256 (string-to-utf-8-byte-vector
-                                                    (if salt
-                                                        (concatenate 'string password-string salt)
-                                                        password-string)))))
+  (bind ((digest (ironclad:digest-sequence :sha256 (babel:string-to-octets (if salt
+                                                                               (concatenate 'string password-string salt)
+                                                                               password-string)
+                                                                           :encoding :utf-8))))
     (iter (repeat +number-of-digest-iterations+)
           (setf digest (ironclad:digest-sequence :sha256 digest)))
     (values (concatenate 'string

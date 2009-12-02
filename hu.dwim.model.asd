@@ -11,7 +11,8 @@
 (defsystem :hu.dwim.model
   :class hu.dwim.system
   :description "Various reusable model fragments."
-  :depends-on (:cl-ppcre
+  :depends-on (:babel
+               :cl-ppcre
                :cl-base64
                :hu.dwim.common
                :hu.dwim.def+cl-l10n
