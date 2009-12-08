@@ -87,10 +87,7 @@
                                         (bind ((instance arg)
                                                (oid (oid-of instance)))
                                           (assert oid)
-                                          ;; FIXME KLUDGE find-symbol due to load-order issues
-                                          ;; create a dwim-model asd and it should depend on dwim-presentation
-                                          (format nil "`p(~A,~A)" oid (funcall (find-symbol "LOCALIZED-INSTANCE-REFERENCE-STRING" :hu.dwim.wui)
-                                                                               instance))))
+                                          (format nil "`p(~A,~A)" oid (localized-instance-name instance))))
                                        (t arg)))
                                    args)))
       (apply #'format nil message processed-args))))
