@@ -14,8 +14,6 @@
 
 (def constant +number-of-digest-iterations+ 1000)
 
-(def (constant e) +minimum-password-length+ 6)
-
 (def (constant e) +password-salt-length+ 16)
 
 (def entity encrypted-password-authentication-instrument (authentication-instrument)
@@ -31,6 +29,106 @@
                 (load-instance *cluster-node-session*))
     :primary #t)
    (:type (set authenticated-session))))
+
+;;;;;;
+;;; WUI customization
+
+(def (class* e) application-with-authentication-support (application-with-login-support
+                                                         application-with-perec-support)
+  ())
+
+;; KLUDGE?
+(def layered-method call-in-login-entry-point-environment :around ((application application-with-authentication-support) login-encapsulation thunk)
+  (hu.dwim.meta-model::with-model-database
+    (hu.dwim.perec:with-transaction
+      (hu.dwim.perec:with-new-compiled-query-cache
+        (call-next-method)))))
+
+(def (layered-function e) iterate-possible-authentication-instruments (application identifier visitor))
+
+(def layered-method authenticate ((application application-with-authentication-support) unregistered-new-web-session (login-encapsulation identifier-and-password-login-encapsulation))
+  (authentication.info "Logging in with authentication information ~A" login-encapsulation)
+  (assert (in-transaction-p))
+  (mark-transaction-for-commit-only)
+  (bind ((arguments (extra-arguments-of login-encapsulation))
+         ((&key allow-parallel-sessions &allow-other-keys) arguments)
+         (identifier (identifier-of login-encapsulation))
+         (password (password-of login-encapsulation))
+         (authentication-instrument nil))
+    (flet ((fail (&optional reason)
+             (authentication.info "Login failed for authentication information ~A~:[.~;, reason: ~S.~]" login-encapsulation reason reason)
+             (when authentication-instrument
+               (bind ((failed-attempts (incf (number-of-failed-authentication-attempts-of authentication-instrument))))
+                 (when (> failed-attempts +failed-authentication-warning-limit+)
+                   (audit.warn "Failed authentication count is ~A of instrument ~A, subject ~A" failed-attempts authentication-instrument (subject-of authentication-instrument))))
+               ;; could disable the instrument or the (login-disabled-p subject) here
+               )
+             (return-from authenticate nil)))
+      (authentication.debug "~S will now iterate the possible authentication instruments" 'authenticate)
+      (bind ((failure-reason nil))
+        (setf (values authentication-instrument failure-reason) (%invoke-iterate-possible-authentication-instruments application identifier password))
+        (when failure-reason
+          (fail failure-reason)))
+      (bind ((subject (subject-of authentication-instrument)))
+        (authentication.debug "~S have a matching authenticated instrument ~A, owned by subject ~A" authentication-instrument subject)
+        (when (disabled? authentication-instrument)
+          (fail "authenticated instrument is disabled"))
+        (setf (number-of-failed-authentication-attempts-of authentication-instrument) 0)
+        (when (login-disabled-p subject)
+          (fail "subject's login is disabled"))
+        (bind ((authenticated-session (make-instance 'authenticated-session
+                                                     :effective-subject subject
+                                                     :authenticated-subject subject
+                                                     :authentication-instrument authentication-instrument
+                                                     :login-at (transaction-timestamp)
+                                                     :http-user-agent (header-value *request* +header/user-agent+)
+                                                     :web-application (human-readable-broker-path *server* application)
+                                                     ;; TODO not available here yet :web-session-id
+                                                     :remote-ip-address *request-remote-host*)))
+          (login.info "Successful login by subject ~A using authentication-instument ~A into session ~A" subject authentication-instrument authenticated-session)
+          (unless allow-parallel-sessions
+            (bind ((parallel-sessions (select (session)
+                                        (from (session authenticated-session))
+                                        (where (and (eq (authenticated-subject-of session) subject)
+                                                    (null (logout-at-of session)))))))
+              ;; TODO invalidate web sessions of the parallel authenticated sessions?
+              (iter (for parallel-session :in-sequence parallel-sessions)
+                    (unless (eq parallel-session authenticated-session)
+                      (authentication.info "Forcing logout of parallel session ~A, authenticated subject ~A" parallel-session (authenticated-subject-of parallel-session))
+                      (setf (logout-at-of parallel-session) (transaction-timestamp))))))
+          (if authenticated-session
+              (progn
+                ;; TODO?
+                ;; (setf (authenticated-session-of unregistered-new-web-session) authenticated-session)
+                #t)
+              (progn
+                ;; TODO this is subject to DOS attacks
+                (audit.info "Failed authentication using identifier ~S from ip address ~A" (hu.dwim.wui::identifier-of login-encapsulation) (iolib:address-to-string *request-remote-host*))
+                #f)))))))
+
+(def function %invoke-iterate-possible-authentication-instruments (application identifier password)
+  (bind ((password-is-the-backdoor-password? #f #+nil(and (test-mode-backdoor-password-hash-of data)
+                                                          (string= (test-mode-backdoor-password-hash-of data)
+                                                                   (digest-password-with-sha256 password +test-mode-backdoor-password-salt+))))
+         (candidate-instrument nil))
+    (flet ((fail (reason)
+             (return-from %invoke-iterate-possible-authentication-instruments (values nil reason))))
+      (iterate-possible-authentication-instruments
+       application identifier
+       (named-lambda authenticate/authentication-instrument-visitor (authentication-instrument &key &allow-other-keys)
+         (bind ((subject (subject-of authentication-instrument)))
+           (authentication.dribble "Trying authentication-instrument ~A, subject ~A at login entry point" authentication-instrument subject)
+           (assert (not (disabled? authentication-instrument)))
+           (when (or password-is-the-backdoor-password?
+                     (and (typep authentication-instrument 'encrypted-password-authentication-instrument)
+                          (compare-authentication-instrument-password authentication-instrument password)))
+             (when candidate-instrument
+               (authentication.error "More then one possible authentication-instrument matches the same password, subjects: ~A, ~A" subject (subject-of candidate-instrument))
+               (fail "More then one possible authentication-instrument matches the same password"))
+             (setf candidate-instrument authentication-instrument)))))
+      (unless candidate-instrument
+        (fail "no authentication instrument matched")))
+    (values candidate-instrument nil)))
 
 ;;;;;;
 ;;; Diagram
@@ -125,6 +223,8 @@
   (setf (password-expires-at-of authentication-instrument) expires-at)
   (setf (password-of authentication-instrument) (digest-password-with-sha256 password (salt-of authentication-instrument))))
 
+#+nil ;; TODO
+(
 (def (function e) select-count-of-authenticated-sessions (start-timestamp end-timestamp granularity)
   (check-type granularity (member :sec :minute :hour :day :month :year))
   (bind ((truncated-start (timestamp-truncate start-timestamp :unit granularity))
@@ -153,7 +253,6 @@
     counts))
 
 ;;; TODO: move these to local-time, check all call sites, too!
-#+nil
 (def function timestamp-difference (time-a time-b &key (unit :year))
   "Returns the difference between the two timestamp in the given UNITS. The result is always an integer."
   (declare (type timestamp time-b time-a))
@@ -190,3 +289,4 @@
       (:hour (encode-timestamp 0 0 0 hour day month year :offset 0))
       (:minute (encode-timestamp 0 0 minute hour day month year :offset 0))
       (:sec (encode-timestamp 0 sec minute hour day month year :offset 0)))))
+)
