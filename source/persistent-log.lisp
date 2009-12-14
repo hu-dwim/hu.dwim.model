@@ -69,15 +69,15 @@
 (def (class e) persistent-appender (appender)
   ())
 
-(def method append-message (category (appender persistent-appender) message level)
+(def method append-message (logger (appender persistent-appender) level message-control message-arguments)
   (assert (symbolp level))
   ;; TODO there should be some assert that we are not in a read-only/rollback-only transaction
   (make-instance 'persistent-log-entry
-                 :category (string-downcase (hu.dwim.logger::name-of category))
+                 :category (string-downcase (hu.dwim.logger::name-of logger))
                  :level level
-                 :content (if (consp message)
-                              (apply 'format-persistent-log-message message)
-                              message)))
+                 :content (if message-arguments
+                              (apply 'format-persistent-log-message message-control message-arguments)
+                              message-control)))
 
 (def function format-persistent-log-message (message &rest args)
   (cl-l10n:with-locale "en"
