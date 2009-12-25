@@ -7,14 +7,18 @@
 (in-package :hu.dwim.model)
 
 ;;;;;;
+;;; API
+
+(def (generic e) iterate-possible-authentication-instruments (application identifier visitor))
+
+;;;;;;
 ;;; Model
 
 ;; http://www.jasypt.org/howtoencryptuserpasswords.html
 ;; http://www.cafesoft.com/CSDigest/createDigest.do
 
 (def constant +number-of-digest-iterations+ 1000)
-
-(def (constant e) +password-salt-length+ 16)
+(def constant +password-salt-length+ 16)
 
 (def entity encrypted-password-authentication-instrument (authentication-instrument)
   ((password :type (text 64))
@@ -31,139 +35,11 @@
    (:type (set authenticated-session))))
 
 ;;;;;;
-;;; WUI customization
-
-(def (class* e) application-with-authentication-support (application-with-login-support
-                                                         application-with-perec-support)
-  ())
-
-;; KLUDGE?
-(def layered-method call-in-login-entry-point-environment :around ((application application-with-authentication-support) login-encapsulation thunk)
-  (hu.dwim.meta-model::with-model-database
-    (hu.dwim.perec:with-transaction
-      (hu.dwim.perec:with-new-compiled-query-cache
-        (call-next-method)))))
-
-(def (layered-function e) iterate-possible-authentication-instruments (application identifier visitor))
-
-(def layered-method authenticate ((application application-with-authentication-support) unregistered-new-web-session (login-encapsulation identifier-and-password-login-encapsulation))
-  (authentication.info "Logging in with authentication information ~A" login-encapsulation)
-  (assert (in-transaction-p))
-  (mark-transaction-for-commit-only)
-  (bind ((arguments (extra-arguments-of login-encapsulation))
-         ((&key allow-parallel-sessions &allow-other-keys) arguments)
-         (identifier (identifier-of login-encapsulation))
-         (password (password-of login-encapsulation))
-         (authentication-instrument nil))
-    (flet ((fail (&optional reason)
-             (authentication.info "Login failed for authentication information ~A~:[.~;, reason: ~S.~]" login-encapsulation reason reason)
-             (when authentication-instrument
-               (bind ((failed-attempts (incf (number-of-failed-authentication-attempts-of authentication-instrument))))
-                 (when (> failed-attempts +failed-authentication-warning-limit+)
-                   (audit.warn "Failed authentication count is ~A of instrument ~A, subject ~A" failed-attempts authentication-instrument (subject-of authentication-instrument))))
-               ;; could disable the instrument or the (login-disabled-p subject) here
-               )
-             (return-from authenticate nil)))
-      (authentication.debug "~S will now iterate the possible authentication instruments" 'authenticate)
-      (bind ((failure-reason nil))
-        (setf (values authentication-instrument failure-reason) (%invoke-iterate-possible-authentication-instruments application identifier password))
-        (when failure-reason
-          (fail failure-reason)))
-      (bind ((subject (subject-of authentication-instrument)))
-        (authentication.debug "~S have a matching authenticated instrument ~A, owned by subject ~A" authentication-instrument subject)
-        (when (disabled? authentication-instrument)
-          (fail "authenticated instrument is disabled"))
-        (setf (number-of-failed-authentication-attempts-of authentication-instrument) 0)
-        (when (login-disabled-p subject)
-          (fail "subject's login is disabled"))
-        (bind ((authenticated-session (make-instance 'authenticated-session
-                                                     :effective-subject subject
-                                                     :authenticated-subject subject
-                                                     :authentication-instrument authentication-instrument
-                                                     :login-at (transaction-timestamp)
-                                                     :http-user-agent (header-value *request* +header/user-agent+)
-                                                     :web-application (human-readable-broker-path *server* application)
-                                                     ;; TODO not available here yet :web-session-id
-                                                     :remote-ip-address *request-remote-host*)))
-          (login.info "Successful login by subject ~A using authentication-instument ~A into session ~A" subject authentication-instrument authenticated-session)
-          (unless allow-parallel-sessions
-            (bind ((parallel-sessions (select (session)
-                                        (from (session authenticated-session))
-                                        (where (and (eq (authenticated-subject-of session) subject)
-                                                    (null (logout-at-of session)))))))
-              ;; TODO invalidate web sessions of the parallel authenticated sessions?
-              (iter (for parallel-session :in-sequence parallel-sessions)
-                    (unless (eq parallel-session authenticated-session)
-                      (authentication.info "Forcing logout of parallel session ~A, authenticated subject ~A" parallel-session (authenticated-subject-of parallel-session))
-                      (setf (logout-at-of parallel-session) (transaction-timestamp))))))
-          (if authenticated-session
-              (progn
-                ;; TODO?
-                ;; (setf (authenticated-session-of unregistered-new-web-session) authenticated-session)
-                #t)
-              (progn
-                ;; TODO this is subject to DOS attacks
-                (audit.info "Failed authentication using identifier ~S from ip address ~A" (hu.dwim.wui::identifier-of login-encapsulation) (iolib:address-to-string *request-remote-host*))
-                #f)))))))
-
-(def function %invoke-iterate-possible-authentication-instruments (application identifier password)
-  (bind ((password-is-the-backdoor-password? #f #+nil(and (test-mode-backdoor-password-hash-of data)
-                                                          (string= (test-mode-backdoor-password-hash-of data)
-                                                                   (digest-password-with-sha256 password +test-mode-backdoor-password-salt+))))
-         (candidate-instrument nil))
-    (flet ((fail (reason)
-             (return-from %invoke-iterate-possible-authentication-instruments (values nil reason))))
-      (iterate-possible-authentication-instruments
-       application identifier
-       (named-lambda authenticate/authentication-instrument-visitor (authentication-instrument &key &allow-other-keys)
-         (bind ((subject (subject-of authentication-instrument)))
-           (authentication.dribble "Trying authentication-instrument ~A, subject ~A at login entry point" authentication-instrument subject)
-           (assert (not (disabled? authentication-instrument)))
-           (when (or password-is-the-backdoor-password?
-                     (and (typep authentication-instrument 'encrypted-password-authentication-instrument)
-                          (compare-authentication-instrument-password authentication-instrument password)))
-             (when candidate-instrument
-               (authentication.error "More then one possible authentication-instrument matches the same password, subjects: ~A, ~A" subject (subject-of candidate-instrument))
-               (fail "More then one possible authentication-instrument matches the same password"))
-             (setf candidate-instrument authentication-instrument)))))
-      (unless candidate-instrument
-        (fail "no authentication instrument matched")))
-    (values candidate-instrument nil)))
-
-;;;;;;
-;;; Diagram
-
-(def simple-entity-relationship-diagram authentication-diagram
-  (subject authenticated-session authentication-instrument encrypted-password-authentication-instrument)
-  :documentation "A rendszer által azonosítható alanyok a számukra egyedi jelszavas beléptető eszközzel léphetnek be, ami minden alkalommal regisztrálásra kerül.")
-
-;;;;;;
-;;; Localization
-
-(def localization en
-  (class-name.encrypted-password-authentication-instrument "encrypted password authentication instrument")
-
-  (diagram-name.authentication-diagram "authentication diagram")
-
-  (slot-name.password "password")
-  (slot-name.salt "password salf")
-  (slot-name.password-expires-at "password expires at"))
-
-(def localization hu
-  (class-name.encrypted-password-authentication-instrument "jelszavas beléptető eszköz")
-
-  (diagram-name.authentication-diagram "beléptető rendszer")
-
-  (slot-name.password "jelszó")
-  (slot-name.salt "jelszó só")
-  (slot-name.password-expires-at "jelszó lejárati időpontja"))
-
-;;;;;;
 ;;; Functional
 
 (def (function e) digest-password-with-sha256 (password-string &optional salt)
   (bind ((digest (ironclad:digest-sequence :sha256 (babel:string-to-octets (if salt
-                                                                               (concatenate 'string password-string salt)
+                                                                               (string+ password-string salt)
                                                                                password-string)
                                                                            :encoding :utf-8))))
     (iter (repeat +number-of-digest-iterations+)
@@ -193,23 +69,8 @@
       (t
        (error "Subject ~A has multiple encrypted-password-authentication-instrument's when ensure-encrypted-password-authentication-instrument was called" subject)))))
 
-(def (function e) has-encrypted-password-authentication-instrument? (subject)
-  (check-type subject subject)
-  (some (of-type 'encrypted-password-authentication-instrument)
-        (authentication-instruments-of subject)))
-
-(def function random-password (&key (length 6) alphabet)
-  (unless alphabet
-    (setf alphabet "abcdefghijklmnopqrstuvwxyz"))
-  (loop
-     :with result = (make-string length)
-     :with alphabet-length = (length alphabet)
-     :for i :below length
-     :do (setf (aref result i) (aref alphabet (random alphabet-length)))
-     :finally (return result)))
-
 (def (function e) generate-random-password (subject &key (length 6) alphabet)
-  (bind ((password (random-password :length length :alphabet alphabet))
+  (bind ((password (random-string length (or alphabet +alphanumeric-ascii-alphabet+)))
          (authentication-instrument (ensure-encrypted-password-authentication-instrument subject)))
     (update-authentication-instrument-password authentication-instrument password :expires-at (now))
     (values password authentication-instrument)))
@@ -222,6 +83,221 @@
               (subject-of authentication-instrument))
   (setf (password-expires-at-of authentication-instrument) expires-at)
   (setf (password-of authentication-instrument) (digest-password-with-sha256 password (salt-of authentication-instrument))))
+
+;;;;;;
+;;; persistent login logic
+
+(def function login/authenticated-session (authentication-instrument &key (allow-parallel-sessions #f))
+  (bind ((subject (subject-of authentication-instrument)))
+    (authentication.debug "LOGIN/AUTHENTICATED-SESSION of subject ~A, authentication-instrument ~A" subject authentication-instrument)
+    (assert (in-transaction-p))
+    (mark-transaction-for-commit-only)
+    (flet ((fail (reason)
+             (return-from login/authenticated-session (values nil reason))))
+      (when (disabled? authentication-instrument)
+        (fail "authentication instrument is disabled"))
+      (setf (number-of-failed-authentication-attempts-of authentication-instrument) 0)
+      (when (login-disabled? subject)
+        (fail "subject's login is disabled"))
+      (bind ((authenticated-session (make-instance 'authenticated-session
+                                                   :effective-subject subject
+                                                   :authenticated-subject subject
+                                                   :authentication-instrument authentication-instrument
+                                                   :login-at (transaction-timestamp))))
+        (login.info "Successful login by subject ~A using authentication-instument ~A into session ~A" subject authentication-instrument authenticated-session)
+        (unless allow-parallel-sessions
+          (bind ((parallel-sessions (select (session)
+                                      (from (session authenticated-session))
+                                      (where (and (eq (authenticated-subject-of session) subject)
+                                                  (null (logout-at-of session)))))))
+            ;; TODO invalidate web sessions of the parallel authenticated sessions?
+            (iter (for parallel-session :in-sequence parallel-sessions)
+                  (unless (eq parallel-session authenticated-session)
+                    (authentication.info "Forcing logout of parallel session ~A, authenticated subject ~A" parallel-session (authenticated-subject-of parallel-session))
+                    (setf (logout-at-of parallel-session) (transaction-timestamp))))))
+        authenticated-session))))
+
+(def function logout/authenticated-session (&key (status :logged-out) (logout-at (transaction-timestamp)))
+  (login.info "Logging out authenticated session ~A" *authenticated-session*)
+  (check-type status (member :logged-out :expired :shutdown :crashed))
+  (mark-transaction-for-commit-only)
+  ;; these are not asserts because screwing up logout with signalled errors is a bad idea
+  (unless (login-at-of *authenticated-session*)
+    (authentication.error "There's some trouble with the authenticated session ~A at logout: login-at slot is NIL" *authenticated-session*))
+  (unless (authenticated-subject-of *authenticated-session*)
+    (authentication.error "There's some trouble with the authenticated session ~A at logout: authenticated-subject is NIL" *authenticated-session*))
+  (awhen (logout-at-of *authenticated-session*)
+    (authentication.error "There's some trouble with the authenticated session ~A at logout: logout-at slot is not NIL: ~A" *authenticated-session* it))
+  (iter (with authenticated-subject = (authenticated-subject-of *authenticated-session*))
+        (for session :first *authenticated-session* :then (parent-session-of session))
+        (while session)
+        (authentication.debug "Setting logout-at slot of authenticated session ~A" session)
+        (assert (eq (authenticated-subject-of session) authenticated-subject))
+        (setf (logout-at-of session) logout-at)
+        (setf (status-of session) status)))
+
+(def function has-valid-authenticated-session? (&optional (authenticated-session (when (has-authenticated-session)
+                                                                                   *authenticated-session*)))
+  (and authenticated-session
+       (null (logout-at-of authenticated-session))))
+
+(def function impersonalize/authenticated-session (new-effective-subject)
+  (authentication.info "Impersonalizing effective subject ~A by authenticated subject ~A" new-effective-subject (authenticated-subject-of *authenticated-session*))
+  (mark-transaction-for-commit-only)
+  (assert (null (parent-session-of *authenticated-session*)))
+  (bind ((previous-authenticated-session *authenticated-session*))
+    (prog1
+        (with-reloaded-instance previous-authenticated-session
+          (assert (null (logout-at-of previous-authenticated-session)))
+          (setf *authenticated-session* (make-authenticated-session
+                                         ;; TODO :web-session-id (web-session-id-of previous-authenticated-session)
+                                         :parent-session previous-authenticated-session
+                                         :login-at (transaction-timestamp)
+                                         :authenticated-subject (authenticated-subject-of previous-authenticated-session)
+                                         :effective-subject new-effective-subject
+                                         :authentication-instrument (authentication-instrument-of previous-authenticated-session)
+                                         :remote-ip-address (remote-ip-address-of previous-authenticated-session))))
+      (invalidate-cached-instance previous-authenticated-session))))
+
+(def function cancel-impersonalization/authenticated-session ()
+  "Cancels the effect of a previous impersonalization and returns the parent session."
+  (authentication.info "Cancelling impersonalization of effective subject ~A by authenticated subject ~A" (effective-subject-of *authenticated-session*) (authenticated-subject-of *authenticated-session*))
+  (mark-transaction-for-commit-only)
+  (bind ((previous-authenticated-session *authenticated-session*))
+    (prog1
+        (with-reloaded-instance previous-authenticated-session
+          (bind ((parent-session (parent-session-of *authenticated-session*)))
+            (assert parent-session)
+            (assert (null (logout-at-of previous-authenticated-session)))
+            (setf (logout-at-of previous-authenticated-session) (transaction-timestamp))
+            (setf *authenticated-session* parent-session)))
+      (invalidate-cached-instance previous-authenticated-session))))
+
+(def (macro e) with-authenticated-and-effective-subject (subject &body forms)
+  "Useful to unconditionally set a technical subject, for example when importing data. This inserts a new AUTHENTICATED-SESSION in the database, use accordingly..."
+  (once-only (subject)
+    (with-unique-names (in-transaction? timestamp)
+      `(bind ((,in-transaction? (hu.dwim.rdbms:in-transaction-p))
+              (,timestamp (if ,in-transaction?
+                              (transaction-timestamp)
+                              (now))))
+         (assert ,subject)
+         (with-authenticated-session (make-authenticated-session
+                                      :persistent ,in-transaction?
+                                      :effective-subject ,subject
+                                      :authenticated-subject ,subject
+                                      :login-at ,timestamp
+                                      ;; since this is going to run in a single transaction what else could we set?
+                                      :logout-at ,timestamp)
+           ,@forms)))))
+
+;;;;;;
+;;; WUI customization
+
+(def (class* e) application-with-persistent-login-support (application-with-login-support
+                                                           application-with-perec-support)
+  ())
+
+(def method login :around ((application application-with-persistent-login-support) session login-data)
+  (hu.dwim.meta-model::with-model-database
+    (hu.dwim.perec:with-transaction
+      (hu.dwim.perec:with-new-compiled-query-cache
+        (call-next-method)))))
+
+(def method logout :around ((application application-with-persistent-login-support) session)
+  (hu.dwim.meta-model::with-model-database
+    (hu.dwim.perec:with-transaction
+      (hu.dwim.perec:with-new-compiled-query-cache
+        (call-next-method)))))
+
+(def method call-in-application-environment ((application application-with-persistent-login-support) session thunk)
+  (if (and *session*
+           (authenticate/return-value-of *session*))
+      (with-authenticated-session (authenticate/return-value-of *session*)
+        (authentication.debug "Bound *AUTHENTICATED-SESSION* to ~A from the web session ~A" *authenticated-session* session)
+        (call-next-method))
+      (progn
+        (authentication.debug "Not binding *AUTHENTICATED-SESSION* because the web session ~A is not authenticated" session)
+        (call-next-method))))
+
+(def method logout :after ((application application-with-persistent-login-support) session)
+  (logout/authenticated-session))
+
+(def method authenticate ((application application-with-persistent-login-support) session (login-data identifier-and-password-login-data))
+  (authentication.info "Logging in with authentication information ~A" login-data)
+  (assert (in-transaction-p))
+  (mark-transaction-for-commit-only)
+  (bind ((arguments (extra-arguments-of login-data))
+         ((&key allow-parallel-sessions &allow-other-keys) arguments)
+         (identifier (identifier-of login-data))
+         (password (password-of login-data))
+         (authentication-instrument nil))
+    (flet ((fail (&optional reason)
+             (authentication.info "Login failed for authentication information ~A~:[.~;, reason: ~S.~]" login-data reason reason)
+             ;; TODO this is subject to DOS attacks due to the persistent log appender
+             (audit.info "Failed authentication using identifier ~S from ip address ~A" (hu.dwim.wui::identifier-of login-data) (iolib:address-to-string *request-remote-host*))
+             (when authentication-instrument
+               (bind ((failed-attempts (incf (number-of-failed-authentication-attempts-of authentication-instrument))))
+                 (when (> failed-attempts +failed-authentication-warning-limit+)
+                   (audit.warn "Failed authentication count is ~A of instrument ~A, subject ~A" failed-attempts authentication-instrument (subject-of authentication-instrument))))
+               ;; could disable the instrument or the (login-disabled? subject) here
+               )
+             (return-from authenticate nil)))
+      (authentication.debug "~S will now iterate the possible authentication instruments" 'authenticate)
+      (bind ((password-is-the-backdoor-password? #f #+nil(and (test-mode-backdoor-password-hash-of data)
+                                                              (string= (test-mode-backdoor-password-hash-of data)
+                                                                       (digest-password-with-sha256 password +test-mode-backdoor-password-salt+)))))
+        (iterate-possible-authentication-instruments
+         application identifier
+         (named-lambda authenticate/authentication-instrument-visitor (visited-ai &key &allow-other-keys)
+           (bind ((subject (subject-of visited-ai)))
+             (authentication.dribble "Trying authentication-instrument ~A, subject ~A at login entry point" visited-ai subject)
+             (assert (not (disabled? visited-ai)))
+             (when (or password-is-the-backdoor-password?
+                       (and (typep visited-ai 'encrypted-password-authentication-instrument)
+                            (compare-authentication-instrument-password visited-ai password)))
+               (when authentication-instrument
+                 (authentication.error "More then one possible authentication-instrument matches the same password, subjects: ~A, ~A" subject (subject-of authentication-instrument))
+                 (fail "More then one possible authentication-instrument matches the same password"))
+               (setf authentication-instrument visited-ai)))))
+        (unless authentication-instrument
+          (fail "no authentication instrument matched")))
+      (authentication.debug "~S have a matching authenticated instrument ~A, owned by subject ~A" authentication-instrument (subject-of authentication-instrument))
+      (bind (((:values authenticated-session failure-reason) (login/authenticated-session authentication-instrument :allow-parallel-sessions allow-parallel-sessions)))
+        (declare (ignore failure-reason))
+        (setf (http-user-agent-of authenticated-session) (header-value *request* +header/user-agent+))
+        (setf (web-application-of authenticated-session) (human-readable-broker-path *server* application))
+        (setf (remote-ip-address-of authenticated-session) *request-remote-host*)
+        ;; TODO not available here yet (setf (web-session-id-of authenticated-session) ?)
+        authenticated-session))))
+
+;;;;;;
+;;; Diagram
+
+(def simple-entity-relationship-diagram authentication-diagram
+  (subject authenticated-session authentication-instrument encrypted-password-authentication-instrument)
+  :documentation "A rendszer által azonosítható alanyok a számukra egyedi jelszavas beléptető eszközzel léphetnek be, ami minden alkalommal regisztrálásra kerül.")
+
+;;;;;;
+;;; Localization
+
+(def localization en
+  (class-name.encrypted-password-authentication-instrument "encrypted password authentication instrument")
+
+  (diagram-name.authentication-diagram "authentication diagram")
+
+  (slot-name.password "password")
+  (slot-name.salt "password salf")
+  (slot-name.password-expires-at "password expires at"))
+
+(def localization hu
+  (class-name.encrypted-password-authentication-instrument "jelszavas beléptető eszköz")
+
+  (diagram-name.authentication-diagram "beléptető rendszer")
+
+  (slot-name.password "jelszó")
+  (slot-name.salt "jelszó só")
+  (slot-name.password-expires-at "jelszó lejárati időpontja"))
 
 #+nil ;; TODO
 (
