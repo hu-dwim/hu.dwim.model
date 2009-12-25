@@ -77,7 +77,8 @@
 
 (def (function e) update-authentication-instrument-password (authentication-instrument password &key expires-at)
   (audit.info "Current authenticated subject ~A is changing the password stored in ~A, owned by ~A"
-              (when (has-authenticated-session)
+              (when (and (boundp '*authenticated-session*)
+                         *authenticated-session*)
                 (current-authenticated-subject))
               authentication-instrument
               (subject-of authentication-instrument))
@@ -88,6 +89,7 @@
 ;;; persistent login logic
 
 (def function login/authenticated-session (authentication-instrument &key (allow-parallel-sessions #f))
+  (check-type authentication-instrument authentication-instrument)
   (bind ((subject (subject-of authentication-instrument)))
     (authentication.debug "LOGIN/AUTHENTICATED-SESSION of subject ~A, authentication-instrument ~A" subject authentication-instrument)
     (assert (in-transaction-p))
@@ -198,38 +200,59 @@
                                                            application-with-perec-support)
   ())
 
-(def method login :around ((application application-with-persistent-login-support) session login-data)
-  (hu.dwim.meta-model::with-model-database
-    (hu.dwim.perec:with-transaction
-      (hu.dwim.perec:with-new-compiled-query-cache
-        (call-next-method)))))
+(def (class* ea) session-with-persistent-login-support (session-with-login-support)
+  ((authenticated-session nil)))
 
-(def method logout :around ((application application-with-persistent-login-support) session)
+(def method session-class list ((application application-with-persistent-login-support))
+  'session-with-persistent-login-support)
+
+(def method is-logged-in? ((session session-with-persistent-login-support))
+  (and (call-next-method)
+       (not (null (authenticated-session-of session)))))
+
+(def method login ((application application-with-persistent-login-support) (session session-with-persistent-login-support) login-data)
+  (assert (null (authenticated-session-of session)))
+  (assert (boundp '*authenticated-session*))
   (hu.dwim.meta-model::with-model-database
     (hu.dwim.perec:with-transaction
       (hu.dwim.perec:with-new-compiled-query-cache
-        (call-next-method)))))
+        (multiple-value-prog1
+            (call-next-method)
+          (bind ((arguments (extra-arguments-of login-data))
+                 ((&key allow-parallel-sessions &allow-other-keys) arguments)
+                 (authentication-instrument (load-instance (authenticate-return-value-of session)))
+                 ((:values authenticated-session failure-reason) (login/authenticated-session authentication-instrument :allow-parallel-sessions allow-parallel-sessions)))
+            (declare (ignore failure-reason))
+            (check-type authenticated-session authenticated-session)
+            (setf (http-user-agent-of authenticated-session) (header-value *request* +header/user-agent+))
+            (setf (web-application-of authenticated-session) (human-readable-broker-path *server* application))
+            (setf (remote-ip-address-of authenticated-session) *request-remote-host*)
+            ;; TODO not available here yet (setf (web-session-id-of authenticated-session) ?)
+            (setf (authenticated-session-of session) authenticated-session)
+            (setf *authenticated-session* authenticated-session)))))))
+
+(def method logout ((application application-with-persistent-login-support) (session session-with-persistent-login-support))
+  (assert (boundp '*authenticated-session*))
+  (hu.dwim.meta-model::with-model-database
+    (hu.dwim.perec:with-transaction
+      (hu.dwim.perec:with-new-compiled-query-cache
+        (multiple-value-prog1
+            (call-next-method)
+          (logout/authenticated-session)
+          (setf (authenticated-session-of session) nil)
+          (setf *authenticated-session* nil))))))
 
 (def method call-in-application-environment ((application application-with-persistent-login-support) session thunk)
-  (if (and *session*
-           (authenticate/return-value-of *session*))
-      (with-authenticated-session (authenticate/return-value-of *session*)
-        (authentication.debug "Bound *AUTHENTICATED-SESSION* to ~A from the web session ~A" *authenticated-session* session)
-        (call-next-method))
-      (progn
-        (authentication.debug "Not binding *AUTHENTICATED-SESSION* because the web session ~A is not authenticated" session)
-        (call-next-method))))
-
-(def method logout :after ((application application-with-persistent-login-support) session)
-  (logout/authenticated-session))
+  (bind ((*authenticated-session* (and *session*
+                                       (authenticated-session-of *session*))))
+    (authentication.debug "Bound *AUTHENTICATED-SESSION* to ~A from the web session ~A" *authenticated-session* session)
+    (call-next-method)))
 
 (def method authenticate ((application application-with-persistent-login-support) session (login-data identifier-and-password-login-data))
   (authentication.info "Logging in with authentication information ~A" login-data)
   (assert (in-transaction-p))
   (mark-transaction-for-commit-only)
-  (bind ((arguments (extra-arguments-of login-data))
-         ((&key allow-parallel-sessions &allow-other-keys) arguments)
-         (identifier (identifier-of login-data))
+  (bind ((identifier (identifier-of login-data))
          (password (password-of login-data))
          (authentication-instrument nil))
     (flet ((fail (&optional reason)
@@ -262,14 +285,8 @@
                (setf authentication-instrument visited-ai)))))
         (unless authentication-instrument
           (fail "no authentication instrument matched")))
-      (authentication.debug "~S have a matching authenticated instrument ~A, owned by subject ~A" authentication-instrument (subject-of authentication-instrument))
-      (bind (((:values authenticated-session failure-reason) (login/authenticated-session authentication-instrument :allow-parallel-sessions allow-parallel-sessions)))
-        (declare (ignore failure-reason))
-        (setf (http-user-agent-of authenticated-session) (header-value *request* +header/user-agent+))
-        (setf (web-application-of authenticated-session) (human-readable-broker-path *server* application))
-        (setf (remote-ip-address-of authenticated-session) *request-remote-host*)
-        ;; TODO not available here yet (setf (web-session-id-of authenticated-session) ?)
-        authenticated-session))))
+      (authentication.debug "~S have found a matching authenticated instrument ~A, owned by subject ~A" authentication-instrument (subject-of authentication-instrument))
+      authentication-instrument)))
 
 ;;;;;;
 ;;; Diagram
