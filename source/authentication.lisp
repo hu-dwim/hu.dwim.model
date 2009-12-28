@@ -138,8 +138,8 @@
         (setf (logout-at-of session) logout-at)
         (setf (status-of session) status)))
 
-(def function has-valid-authenticated-session? (&optional (authenticated-session (when (has-authenticated-session)
-                                                                                   *authenticated-session*)))
+(def function valid-authenticated-session? (&optional (authenticated-session (when (has-authenticated-session)
+                                                                               *authenticated-session*)))
   (and authenticated-session
        (null (logout-at-of authenticated-session))))
 
