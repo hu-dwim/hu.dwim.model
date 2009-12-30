@@ -126,7 +126,7 @@
   (-entity-)
   "Permits starting persistent processes.")
 
-(def operation standard-persistent-process-instance-operation (standard-persistent-process-operation)
+(def operation standard-persistent-process-instance-operation (standard-instance-operation standard-persistent-process-operation)
   (-entity- -instance-)
   "Base operation for all persistent-process instance related operations.")
 
