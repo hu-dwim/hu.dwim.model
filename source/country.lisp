@@ -261,7 +261,7 @@
 (def persistent-type country-code ()
   `(member ,@(mapcar 'first *country-data*)))
 
-(def entity country ()
+(def (entity e) country ()
   ((code
     :type country-code)
    (name

@@ -9,7 +9,7 @@
 ;;;;;;
 ;;; Model
 
-(def entity settlement ()
+(def (entity e) settlement ()
   ((name :type standard-text :primary #t :reference #t)
    (sub-name :type (or null standard-text) :primary #t)
    (code :type integer-32)

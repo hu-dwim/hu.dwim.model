@@ -9,7 +9,7 @@
 ;;;;;;
 ;;; Desktop
 
-(def entity desktop ()
+(def (entity e) desktop ()
   ((name
     :type standard-text
     :reference #t

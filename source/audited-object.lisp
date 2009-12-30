@@ -15,7 +15,7 @@
 ;;; these slots are unbound until the end of the transaction the given
 ;;; instance is created.
 
-(def entity audited-object ()
+(def (entity e) audited-object ()
   ((created-at
     :type (or unbound timestamp)
     :definitive #t

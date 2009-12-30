@@ -12,7 +12,7 @@
 (def (persistent-type e) mime-type ()
   `(text 100))
 
-(def entity attachment (audited-object)
+(def (entity e) attachment (audited-object)
   ((name
     :type (or null standard-text)
     :reference #t
@@ -24,7 +24,7 @@
     :type mime-type
     :primary #t)))
 
-(def entity object-with-attachments ()
+(def (entity e) object-with-attachments ()
   ()
   (:abstract #t))
 

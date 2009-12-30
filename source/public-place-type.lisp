@@ -6,7 +6,7 @@
 
 (in-package :hu.dwim.model)
 
-(def entity public-place-type ()
+(def (entity e) public-place-type ()
   ((name :type standard-text :primary #t :reference #t)))
 
 (def function create-public-place-types (country-code &optional public-place-types)

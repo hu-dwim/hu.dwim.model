@@ -9,7 +9,7 @@
 ;;;;;;
 ;;; Model
 
-(def entity county ()
+(def (entity e) county ()
   ((name :type standard-text :primary #t :reference #t)))
 
 (def association

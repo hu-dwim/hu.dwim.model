@@ -9,7 +9,7 @@
 ;;;;;;
 ;;; Model
 
-(def entity subject-preferences ()
+(def (entity e) subject-preferences ()
   ((display-command-labels :type (or unbound boolean) :accessor display-command-labels?)
    (maximum-drill-down-depth :type (or null integer-8))
    (timezone :type (or null (text 64)))))

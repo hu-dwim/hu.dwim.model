@@ -11,7 +11,7 @@
 ;;;;;;
 ;;; Model
 
-(def entity cluster (audited-object)
+(def (entity e) cluster (audited-object)
   ((name
     :type standard-text
     :primary #t
@@ -29,7 +29,7 @@
     :type (or null standard-text)))
   (:documentation "A cluster több számítógépet magába foglaló fürtözött, elosztott rendszer. A terhelés elosztása a skálázhatóság miatt fontos."))
 
-(def entity cluster-node (audited-object)
+(def (entity e) cluster-node (audited-object)
   ((host-name
     (machine-instance)
     :type standard-text
@@ -92,7 +92,7 @@
   ((:type cluster)
    (:type (set cluster-node))))
 
-(def entity cluster-node-session ()
+(def (entity e) cluster-node-session ()
   ((status
     :alive
     :type (member :alive :shutdown :crashed))

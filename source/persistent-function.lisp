@@ -9,7 +9,7 @@
 ;;;;;;
 ;;; Persistent function
 
-(def entity persistent-function ()
+(def (entity e) persistent-function ()
   ((name
     :type standard-text
     :primary #t
@@ -20,7 +20,7 @@
    (body
     :type form)))
 
-(def entity persistent-argument ()
+(def (entity e) persistent-argument ()
   ((name
     :type standard-text
     :primary #t

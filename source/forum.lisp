@@ -9,7 +9,7 @@
 ;;;;;;
 ;;; Model
 
-(def entity topic (audited-object)
+(def (entity e) topic (audited-object)
   ((title
     :type standard-text
     :reference #t
@@ -19,7 +19,7 @@
   ((:slot parent-topic :type (or null topic))
    (:slot children-topics :type (set topic))))
 
-(def entity topic-post (audited-object)
+(def (entity e) topic-post (audited-object)
   ((subject
     :type standard-text
     :reference #t

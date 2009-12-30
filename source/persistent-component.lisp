@@ -9,7 +9,7 @@
 ;;;;;;
 ;;; Persistent component
 
-(def entity persistent-component ()
+(def (entity e) persistent-component ()
   ((description
     :type (or null html-text)
     :reference #t

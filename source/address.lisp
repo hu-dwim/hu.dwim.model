@@ -9,7 +9,7 @@
 ;;;;;;
 ;;; Model
 
-(def entity public-place ()
+(def (entity e) public-place ()
   ((name :type standard-text :primary #t :reference #t)
    (long-name :type standard-text :compute-as (string+)))) ;; TODO:
 
@@ -29,7 +29,7 @@
   (class-name.public-place "közterület")
   (class-name.public-place-type "közterület típus"))
 
-(def entity address ()
+(def (entity e) address ()
   ((house-number :type integer-16 :primary #t)
    (floor-number :type (or null integer-16) :primary #t)
    (door :type (or null integer-16) :primary #t)

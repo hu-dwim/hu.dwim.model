@@ -9,7 +9,7 @@
 ;;;;;;
 ;;; Model
 
-(def entity persistent-log-entry ()
+(def (entity e) persistent-log-entry ()
   ((logged-at (transaction-timestamp)
     :type timestamp
     :reference #t
