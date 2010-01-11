@@ -20,7 +20,7 @@
                :hu.dwim.logger
                :hu.dwim.meta-model
                :hu.dwim.syntax-sugar+hu.dwim.walker
-               :hu.dwim.util.all
+               :hu.dwim.util
                :hu.dwim.wui+hu.dwim.perec
                :local-time)
   :components ((:module "source"

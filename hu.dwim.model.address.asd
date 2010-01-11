@@ -17,7 +17,7 @@
                :hu.dwim.logger
                :hu.dwim.meta-model
                :hu.dwim.syntax-sugar+hu.dwim.walker
-               :hu.dwim.util.all
+               :hu.dwim.util
                :hu.dwim.wui+hu.dwim.perec)
   :components ((:module "source"
                 :components ((:file "address" :depends-on ("settlement" "public-place-type"))
