@@ -89,8 +89,8 @@
   (:documentation "Egy a clusterben részt vevö számítógép."))
 
 (def association
-  ((:type cluster)
-   (:type (set cluster-node))))
+  ((:slot cluster :type cluster)
+   (:slot cluster-nodes :type (set cluster-node))))
 
 (def (entity e) cluster-node-session ()
   ((status
@@ -119,8 +119,8 @@
   (:documentation "A clusterben részt vevő számítógépek minden egyes elindítása és a működése közben felvett statisztikák egy sessionben vannak tárolva."))
 
 (def association
-  ((:type cluster-node :primary #t :reference #t)
-   (:type (set cluster-node-session))))
+  ((:slot cluster-node :type cluster-node :primary #t :reference #t)
+   (:slot cluster-node-sessions :type (set cluster-node-session))))
 
 (def simple-entity-relationship-diagram cluster-diagram
   (cluster cluster-node cluster-node-session authenticated-session)

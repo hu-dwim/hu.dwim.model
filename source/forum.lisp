@@ -31,8 +31,8 @@
     :type timestamp)))
 
 (def association
-  ((:type topic)
-   (:type (set topic-post))))
+  ((:slot topic :type topic)
+   (:slot topic-posts :type (set topic-post))))
 
 (def (singleton-persistent-instance e) *root-topic*
   (select-instance (instance topic)

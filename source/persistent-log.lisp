@@ -26,11 +26,10 @@
     :primary #t)))
 
 (def association
-  ((:type (or null authenticated-session)
+  ((:slot authenticated-session :type (or null authenticated-session) :primary #t
     :initform (when (has-authenticated-session)
-                (current-authenticated-session))
-    :primary #t)
-   (:type (set persistent-log-entry))))
+                (current-authenticated-session)))
+   (:slot persistent-log-entries :type (set persistent-log-entry))))
 
 ;;;;;;
 ;;; Localization

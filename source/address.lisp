@@ -14,12 +14,12 @@
    (long-name :type standard-text :compute-as (string+)))) ;; TODO:
 
 (def association
-  ((:class public-place-type :slot public-places :type (set public-place))
-   (:class public-place :slot public-place-type :type public-place-type)))
+  ((:slot public-places :type (set public-place))
+   (:slot public-place-type :type public-place-type)))
 
 (def association
-  ((:class settlement :slot public-places :type (set public-place))
-   (:class public-place :slot settlement :type settlement :reference #t)))
+  ((:slot public-places :type (set public-place))
+   (:slot settlement :type settlement :reference #t)))
 
 (def localization en
   (class-name.public-place "public place")
@@ -40,8 +40,8 @@
   (:statistics :min 10))
 
 (def association
-  ((:class public-place :slot addresses :type (set address))
-   (:class address :slot public-place :type public-place :primary #t)))
+  ((:slot addresses :type (set address))
+   (:slot public-place :type public-place :primary #t)))
 
 ;;;;;;
 ;;; Localization

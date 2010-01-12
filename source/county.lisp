@@ -13,8 +13,8 @@
   ((name :type standard-text :primary #t :reference #t)))
 
 (def association
-  ((:class country :slot counties :type (set county))
-   (:class county :slot country :type country :primary #t)))
+  ((:slot counties :type (set county))
+   (:slot country :type country :primary #t)))
 
 ;;;;;;
 ;;; Localization

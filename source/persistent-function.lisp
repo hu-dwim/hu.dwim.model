@@ -32,8 +32,8 @@
     :type form)))
 
 (def association
-  ((:type persistent-function :primary #t)
-   (:type (set persistent-argument))))
+  ((:slot persistent-function :type persistent-function :primary #t)
+   (:slot persistent-arguments :type (set persistent-argument))))
 
 ;;;;;;
 ;;; Localization

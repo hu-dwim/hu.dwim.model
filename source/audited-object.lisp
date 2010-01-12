@@ -33,19 +33,12 @@
     (touch-instance instance #t)))
 
 (def association
-  ((:slot created-instances
-    :type (set audited-object))
-   (:slot created-in
-    :type (or unbound authenticated-session)
-    :definitive #t
-    :editable #f)))
+  ((:slot created-instances :type (set audited-object))
+   (:slot created-in :type (or unbound authenticated-session) :definitive #t :editable #f)))
 
 (def association
-  ((:slot last-modified-instances
-    :type (set audited-object))
-   (:slot last-modified-in
-    :type (or unbound authenticated-session)
-    :editable #f)))
+  ((:slot last-modified-instances :type (set audited-object))
+   (:slot last-modified-in :type (or unbound authenticated-session) :editable #f)))
 
 ;;;;;;
 ;;; Localization

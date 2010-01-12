@@ -20,12 +20,12 @@
 
 #+nil
 (def association
-  ((:class settlement :slot parent-settlement :type (or null settlement))
+  ((:slot parent-settlement :type (or null settlement))
    (:class settlement :slot settlement-part :type (set settlement))))
 
 (def association
-  ((:class county :slot settlements :type (set settlement))
-   (:class settlement :slot county :type county)))
+  ((:slot settlements :type (set settlement))
+   (:slot county :type county)))
 
 ;;;;;;
 ;;; Data

@@ -16,8 +16,8 @@
     :primary #t)))
 
 (def association
-  ((:type (set persistent-component))
-   (:type desktop)))
+  ((:slot desktop :type (or null desktop))
+   (:slot persistent-components :type (set persistent-component))))
 
 ;;;;;;
 ;;; Localization

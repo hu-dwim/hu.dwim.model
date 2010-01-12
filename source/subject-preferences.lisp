@@ -15,8 +15,8 @@
    (timezone :type (or null (text 64)))))
 
 (def association
-  ((:type subject)
-   (:type (or null subject-preferences))))
+  ((:slot subject :type subject)
+   (:slot subject-preferences :type (or null subject-preferences))))
 
 (def (function e) current-effective-subject-preferences ()
   (subject-preferences-of (current-effective-subject)))

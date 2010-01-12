@@ -29,8 +29,8 @@
   (:abstract #t))
 
 (def association
-  ((:type object-with-attachments)
-   (:type (set attachment))))
+  ((:slot object-with-attachments :type object-with-attachments)
+   (:slot attachments :type (set attachment))))
 
 ;;;;;;
 ;;; Localization

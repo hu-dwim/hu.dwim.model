@@ -27,12 +27,11 @@
   (:documentation "A jelszavas azonosító eszköz egy a felhasználó által megadott jelszót tárol. Az eltárolt információból a jelszó nem kikövetkeztethető, de egy megadott jelszóra nézve ellenőrizhető, hogy az megegyezik-e az eredetileg megadottal."))
 
 (def association
-  ((:type (or null cluster-node-session)
+  ((:slot cluster-node-session :type (or null cluster-node-session) :primary #t
     :initform (when (and (in-transaction-p)
                          *cluster-node-session*)
-                (load-instance *cluster-node-session*))
-    :primary #t)
-   (:type (set authenticated-session))))
+                (load-instance *cluster-node-session*)))
+   (:slot authenticated-sessions :type (set authenticated-session))))
 
 ;;;;;;
 ;;; Functional
