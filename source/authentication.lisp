@@ -242,6 +242,7 @@
           (setf *authenticated-session* nil))))))
 
 (def method call-in-application-environment ((application application-with-persistent-login-support) session thunk)
+  ;; TODO maybe we don't even want to bind it if it's not available...
   (bind ((*authenticated-session* (and *session*
                                        (authenticated-session-of *session*))))
     (authentication.debug "Bound *AUTHENTICATED-SESSION* to ~A from the web session ~A" *authenticated-session* session)
