@@ -196,7 +196,7 @@
   (diagram-name.authentication-diagram "authentication diagram")
 
   (slot-name.password "password")
-  (slot-name.salt "password salf")
+  (slot-name.salt "password salt")
   (slot-name.password-expires-at "password expires at"))
 
 (def localization hu
