@@ -243,7 +243,7 @@
                                                             (eq (status-of instance) :alive)))))
           (cluster.warn "Oops, setting the status of the crashed ~A to :crashed" crashed-cluster-node-session)
           (setf (status-of crashed-cluster-node-session) :crashed))
-        (setf *cluster-node-session* (make-cluster-node-session))
+        (setf *cluster-node-session* (make-instance 'cluster-node-session))
         (setf *cluster-node-current-operation-mode* (requested-operation-mode-of cluster-node))
         (setf (cluster-node-of *cluster-node-session*) cluster-node)
         (when web-server

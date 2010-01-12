@@ -150,14 +150,14 @@
     (prog1
         (with-reloaded-instance previous-authenticated-session
           (assert (null (logout-at-of previous-authenticated-session)))
-          (setf *authenticated-session* (make-authenticated-session
-                                         ;; TODO :web-session-id (web-session-id-of previous-authenticated-session)
-                                         :parent-session previous-authenticated-session
-                                         :login-at (transaction-timestamp)
-                                         :authenticated-subject (authenticated-subject-of previous-authenticated-session)
-                                         :effective-subject new-effective-subject
-                                         :authentication-instrument (authentication-instrument-of previous-authenticated-session)
-                                         :remote-ip-address (remote-ip-address-of previous-authenticated-session))))
+          (setf *authenticated-session* (make-instance 'authenticated-session
+                                                       ;; TODO :web-session-id (web-session-id-of previous-authenticated-session)
+                                                       :parent-session previous-authenticated-session
+                                                       :login-at (transaction-timestamp)
+                                                       :authenticated-subject (authenticated-subject-of previous-authenticated-session)
+                                                       :effective-subject new-effective-subject
+                                                       :authentication-instrument (authentication-instrument-of previous-authenticated-session)
+                                                       :remote-ip-address (remote-ip-address-of previous-authenticated-session))))
       (invalidate-cached-instance previous-authenticated-session))))
 
 (def function cancel-impersonalization/authenticated-session ()
@@ -183,13 +183,13 @@
                               (transaction-timestamp)
                               (now))))
          (assert ,subject)
-         (with-authenticated-session (make-authenticated-session
-                                      :persistent ,in-transaction?
-                                      :effective-subject ,subject
-                                      :authenticated-subject ,subject
-                                      :login-at ,timestamp
-                                      ;; since this is going to run in a single transaction what else could we set?
-                                      :logout-at ,timestamp)
+         (with-authenticated-session (make-instance 'authenticated-session
+                                                    :persistent ,in-transaction?
+                                                    :effective-subject ,subject
+                                                    :authenticated-subject ,subject
+                                                    :login-at ,timestamp
+                                                    ;; since this is going to run in a single transaction what else could we set?
+                                                    :logout-at ,timestamp)
            ,@forms)))))
 
 ;;;;;;
