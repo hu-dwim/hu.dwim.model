@@ -117,7 +117,7 @@
             (check-type authenticated-session authenticated-session)
             (setf (http-user-agent-of authenticated-session) (header-value *request* +header/user-agent+))
             (setf (web-application-of authenticated-session) (human-readable-broker-path *server* application))
-            (setf (remote-ip-address-of authenticated-session) *request-remote-host*)
+            (setf (remote-ip-address-of authenticated-session) *request-remote-address*)
             ;; TODO not available here yet (setf (web-session-id-of authenticated-session) ?)
             (setf (authenticated-session-of session) authenticated-session)
             (setf *authenticated-session* authenticated-session)))))))
