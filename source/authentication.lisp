@@ -150,7 +150,7 @@
     (flet ((fail (&optional reason)
              (authentication.info "Login failed for authentication information ~A~:[.~;, reason: ~S.~]" login-data reason reason)
              ;; TODO this is subject to DOS attacks due to the persistent log appender
-             (audit.info "Failed authentication using identifier ~S from ip address ~A" (hu.dwim.wui::identifier-of login-data) (iolib:address-to-string *request-remote-host*))
+             (audit.info "Failed authentication using identifier ~S from ip address ~A" (hu.dwim.wui::identifier-of login-data) *request-remote-address/string*)
              (when authentication-instrument
                (bind ((failed-attempts (incf (number-of-failed-authentication-attempts-of authentication-instrument))))
                  (when (> failed-attempts +failed-authentication-warning-limit+)
