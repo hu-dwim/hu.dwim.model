@@ -187,27 +187,6 @@
   (subject authenticated-session authentication-instrument encrypted-password-authentication-instrument)
   :documentation "A rendszer által azonosítható alanyok a számukra egyedi jelszavas beléptető eszközzel léphetnek be, ami minden alkalommal regisztrálásra kerül.")
 
-;;;;;;
-;;; Localization
-
-(def localization en
-  (class-name.encrypted-password-authentication-instrument "encrypted password authentication instrument")
-
-  (diagram-name.authentication-diagram "authentication diagram")
-
-  (slot-name.password "password")
-  (slot-name.salt "password salt")
-  (slot-name.password-expires-at "password expires at"))
-
-(def localization hu
-  (class-name.encrypted-password-authentication-instrument "jelszavas beléptető eszköz")
-
-  (diagram-name.authentication-diagram "beléptető rendszer")
-
-  (slot-name.password "jelszó")
-  (slot-name.salt "jelszó só")
-  (slot-name.password-expires-at "jelszó lejárati időpontja"))
-
 #+nil ;; TODO
 (
 (def (function e) select-count-of-authenticated-sessions (start-timestamp end-timestamp granularity)

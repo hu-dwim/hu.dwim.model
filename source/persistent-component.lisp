@@ -16,18 +16,3 @@
     :primary #t)
    (content
     :type serialized)))
-
-;;;;;;
-;;; Localization
-
-(def localization en
-  (class-name.persistent-component "component")
-
-  (slot-name.description "description")
-  (slot-name.content "content"))
-
-(def localization hu
-  (class-name.persistent-component "komponens")
-
-  (slot-name.description "leírás")
-  (slot-name.content "tartalom"))

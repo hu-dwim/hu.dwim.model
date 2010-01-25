@@ -39,24 +39,12 @@
     (where (null (parent-topic-of instance)))))
 
 ;;;;;;
-;;; Localization
+;;; Functional
 
-(def localization en
-  (class-name.topic "topic")
-  (class-name.topic-post "post")
-
-  (slot-name.title "title")
-  (slot-name.subject "subject")
-  (slot-name.content "content")
-  (slot-name.publish-at "publish at")
-  (slot-name.children-topics "children topics"))
-
-(def localization hu
-  (class-name.topic "téma")
-  (class-name.topic-post "bejegyzés")
-
-  (slot-name.title "cím")
-  (topic-post.subject "tárgy")
-  (slot-name.content "tartalom")
-  (slot-name.publish-at "megjelenés ideje")
-  (slot-name.children-topics "altémák"))
+(def (function e) select-last-topic-posts (topic-post)
+  (select (instance)
+    (from (instance topic-post))
+    (where (and (eq (topic-of instance) topic-post)
+                (timestamp< (publish-at-of instance) (transaction-timestamp))))
+    (order-by :descending (publish-at-of instance))
+    (limit 10)))

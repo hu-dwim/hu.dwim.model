@@ -17,15 +17,6 @@
    (:slot country :type country :primary #t)))
 
 ;;;;;;
-;;; Localization
-
-(def localization en
-  (class-name.county "county"))
-
-(def localization hu
-  (class-name.county "megye"))
-
-;;;;;;
 ;;; Data
 
 (def generic create-counties (country &optional counties)

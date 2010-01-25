@@ -18,12 +18,3 @@
 (def association
   ((:slot desktop :type (or null desktop))
    (:slot persistent-components :type (set persistent-component))))
-
-;;;;;;
-;;; Localization
-
-(def localization en
-  (class-name.desktop "desktop"))
-
-(def localization hu
-  (class-name.desktop "asztal"))

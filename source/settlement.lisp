@@ -49,22 +49,3 @@
 
 (def function create-hu-settlements ()
   (create-settlements 'hu (mapcar #'cdr *hu-settlement-data*)))
-
-;;;;;;
-;;; Localization
-
-(def localization en
-  (class-name.settlement "settlement")
-  (slot-name.code "code")
-  (slot-name.zip-code "zip code")
-  (slot-name.latitude "latitude")
-  (slot-name.longitude "longitude")
-  (slot-name.dialing-code "dialing code"))
-
-(def localization hu
-  (class-name.settlement "település")
-  (slot-name.code "kód")
-  (slot-name.zip-code "irányítószám")
-  (slot-name.latitude "szélességi fok")
-  (slot-name.longitude "hosszúsági fok")
-  (slot-name.dialing-code "előhívó szám"))

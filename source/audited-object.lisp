@@ -41,27 +41,6 @@
    (:slot last-modified-in :type (or unbound authenticated-session) :editable #f)))
 
 ;;;;;;
-;;; Localization
-
-(def localization en
-  (class-name.audited-object "audited object")
-  (slot-name.created-at "created at")
-  (slot-name.last-modified-at "last modified at")
-  (slot-name.created-in "created in")
-  (slot-name.created-instances "created instances")
-  (slot-name.last-modified-in "last modified in")
-  (slot-name.last-modified-instances "last modified instances"))
-
-(def localization hu
-  (class-name.audited-object "auditált objektum")
-  (slot-name.created-at "létrehozás időpontja")
-  (slot-name.last-modified-at "utolsó módosítás időpontja")
-  (slot-name.created-in "létrehozva")
-  (slot-name.created-instances "létrehozott példányok")
-  (slot-name.last-modified-in "utoljára módosítva")
-  (slot-name.last-modified-instances "utoljára módosított példányok"))
-
-;;;;;;
 ;;; Functional
 
 (def method (setf slot-value-using-class) :before (new-value

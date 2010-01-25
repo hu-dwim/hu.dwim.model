@@ -31,22 +31,3 @@
 (def association
   ((:slot object-with-attachments :type object-with-attachments)
    (:slot attachments :type (set attachment))))
-
-;;;;;;
-;;; Localization
-
-(def localization en
-  (class-name.attachment "attachment")
-  (class-name.object-with-attachments "object with attachments")
-
-  (slot-name.name "name")
-  (slot-name.mime-type "MIME type")
-  (slot-name.content "content"))
-
-(def localization hu
-  (class-name.attachment "csatolás")
-  (class-name.object-with-attachments "csatolásokkal renderlező objektum")
-
-  (slot-name.name "név")
-  (slot-name.mime-type "MIME típus")
-  (slot-name.content "tartalom"))

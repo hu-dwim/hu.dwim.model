@@ -20,12 +20,3 @@
 
 (def (function e) current-effective-subject-preferences ()
   (subject-preferences-of (current-effective-subject)))
-
-;;;;;;
-;;; Localization
-
-(def localization hu
-  (class-name.subject-preferences "beállítások")
-  (slot-name.display-command-labels "parancsikonok szövegének megjelenítése")
-  (slot-name.maximum-drill-down-depth "maximális lefúrási mélység")
-  (slot-name.timezone "időzóna"))

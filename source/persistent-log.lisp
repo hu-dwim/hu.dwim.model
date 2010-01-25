@@ -32,37 +32,6 @@
    (:slot persistent-log-entries :type (set persistent-log-entry))))
 
 ;;;;;;
-;;; Localization
-
-(def localization en
-  (class-name.persistent-log-entry "persistent log entry")
-
-  (slot-name.logged-at "logged at")
-  (slot-name.category "category")
-  (slot-name.level "level")
-
-  (level.+dribble+ "dribble")
-  (level.+debug+ "debug")
-  (level.+info+ "information")
-  (level.+warn+ "warning")
-  (level.+error+ "error")
-  (level.+fatal+ "fatal error"))
-
-(def localization hu
-  (class-name.persistent-log-entry "napló bejegyzés")
-
-  (slot-name.logged-at "bejegyezés időpontja")
-  (slot-name.category "categória")
-  (slot-name.level "szint")
-
-  (level.+dribble+ "sustorgás")
-  (level.+debug+ "részletes")
-  (level.+info+ "információ")
-  (level.+warn+ "figyelmeztetés")
-  (level.+error+ "hiba")
-  (level.+fatal+ "fatális hiba"))
-
-;;;;;;
 ;;; Functional
 
 (def (class e) persistent-appender (appender)

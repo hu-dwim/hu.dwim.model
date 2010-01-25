@@ -277,12 +277,3 @@
 (def (function e) create-countries ()
   (dolist (data (symbol-value '*country-data*))
     (make-country :code (pop data))))
-
-;;;;;;
-;;; Localization
-
-(def localization en
-  (class-name.country "country"))
-
-(def localization hu
-  (class-name.country "ország"))

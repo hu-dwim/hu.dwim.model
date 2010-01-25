@@ -34,24 +34,3 @@
 (def association
   ((:slot persistent-function :type persistent-function :primary #t)
    (:slot persistent-arguments :type (set persistent-argument))))
-
-;;;;;;
-;;; Localization
-
-(def localization en
-  (class-name.persistent-function "function")
-  (class-name.persistent-argument "argument")
-
-  (slot-name.name "name")
-  (slot-name.description "description")
-  (slot-name.body "body")
-  (slot-name.the-type "type"))
-
-(def localization hu
-  (class-name.persistent-function "függvény")
-  (class-name.persistent-argument "paraméter")
-
-  (slot-name.name "név")
-  (slot-name.description "leírás")
-  (slot-name.body "törzs")
-  (slot-name.the-type "típus"))

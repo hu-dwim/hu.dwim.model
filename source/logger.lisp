@@ -7,3 +7,8 @@
 (in-package :hu.dwim.model)
 
 (def logger model ())
+
+(def logger cluster (model))
+
+;; TODO: move?
+(def localization-loader-callback model-localization-loader :hu.dwim.model "localization")

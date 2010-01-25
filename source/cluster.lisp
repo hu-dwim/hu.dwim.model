@@ -6,8 +6,6 @@
 
 (in-package :hu.dwim.model)
 
-(def logger cluster (model))
-
 ;;;;;;
 ;;; Model
 
@@ -130,74 +128,13 @@
 
 (def special-variable *cluster-name* "test")
 
-(def (special-variable e :documentation "The currently running cluster node session or nil")
-    *cluster-node-session* nil)
+(def (special-variable e :documentation "The currently running cluster node session or nil") *cluster-node-session* nil)
 
-(def (special-variable e :documentation "The universal time when node activity was last updated in the database")
-    *cluster-node-last-activity* nil)
+(def (special-variable e :documentation "The universal time when node activity was last updated in the database") *cluster-node-last-activity* nil)
 
-(def (special-variable e :documentation "The current operation mode which may be different from the requested in the database.")
-    *cluster-node-current-operation-mode*)
+(def (special-variable e :documentation "The current operation mode which may be different from the requested in the database.") *cluster-node-current-operation-mode*)
 
-(def (special-variable e :documentation "The web server associated with this node.")
-    *cluster-node-web-server* nil)
-
-;;;;;;
-;;; Localization
-
-(def localization en
-  (class-name.cluster "cluster")
-  (class-name.cluster-node "cluster node")
-  (class-name.cluster-node-session "cluster node session")
-
-  (slot-name.name "name")
-
-  (slot-name.requested-operation-mode "operation mode")
-  (requested-operation-mode.normal "normal")
-  (requested-operation-mode.maintenance "maintenance")
-  (requested-operation-mode.shutdown "shutdown")
-  (requested-operation-mode.mixed "mixed")
-
-  (slot-name.host-name "host name")
-  (slot-name.persistent-process-scheduler-poll-time "persistent process scheduler poll time")
-  (slot-name.persistent-process-worker-count "persistent process worker count")
-  (slot-name.web-worker-count "web worker count")
-  (slot-name.last-started-session "last started session")
-  (slot-name.startup-at "startup at")
-  (slot-name.shutdown-at "shutdown at")
-  (slot-name.last-activity-at "last activity at")
-  (slot-name.load-average "load average")
-  (slot-name.mail-relay-host-name "mail relay host name")
-  (slot-name.dynamic-space-usage "dynamic space usage")
-  (slot-name.web-session-count "web session count")
-
-  (diagram-name.cluster-diagram "cluster diagram"))
-
-(def localization hu
-  (class-name.cluster "cluster")
-  (class-name.cluster-node "cluster node")
-  (class-name.cluster-node-session "cluster node session")
-
-  (slot-name.requested-operation-mode "működési mód")
-  (requested-operation-mode.normal "normál üzem")
-  (requested-operation-mode.maintenance "karbantartás")
-  (requested-operation-mode.shutdown "leállítva")
-  (requested-operation-mode.mixed "kevert")
-
-  (slot-name.host-name "szerver név")
-  (slot-name.persistent-process-scheduler-poll-time "perzisztens folyamat ütemező várakozási idő")
-  (slot-name.persistent-process-worker-count "perzisztens folyamat feldolgozók száma")
-  (slot-name.web-worker-count "web feldolgozók száma")
-  (slot-name.last-started-session "legutóbbi üzemelés")
-  (slot-name.startup-at "elindítás időpontja")
-  (slot-name.shutdown-at "leállítás időpontja")
-  (slot-name.last-activity-at "utolsó aktivitás időpontja")
-  (slot-name.load-average "terhelés")
-  (slot-name.mail-relay-host-name "mail szerver neve")
-  (slot-name.dynamic-space-usage "dinamikus memória foglaltság")
-  (slot-name.web-session-count "web session-ök száma")
-
-  (diagram-name.cluster-diagram "fürtözött rendszer"))
+(def (special-variable e :documentation "The web server associated with this node.") *cluster-node-web-server* nil)
 
 ;;;;;;
 ;;; Functional
