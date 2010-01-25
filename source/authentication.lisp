@@ -140,7 +140,7 @@
     (authentication.debug "Bound *AUTHENTICATED-SESSION* to ~A from the web session ~A" *authenticated-session* session)
     (call-next-method)))
 
-(def method authenticate ((application application-with-persistent-login-support) session (login-data identifier-and-password-login-data))
+(def method authenticate ((application application-with-persistent-login-support) session (login-data login-data/identifier-and-password))
   (authentication.info "Logging in with authentication information ~A" login-data)
   (assert (in-transaction-p))
   (mark-transaction-for-commit-only)
