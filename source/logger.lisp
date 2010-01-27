@@ -11,4 +11,4 @@
 (def logger cluster (model))
 
 ;; TODO: move?
-(def localization-loader-callback model-localization-loader :hu.dwim.model "localization")
+(def localization-loader-callback model-localization-loader :hu.dwim.model "localization/")
