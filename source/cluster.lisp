@@ -199,7 +199,7 @@
                     (where (and (eq (cluster-node-of (cluster-node-session-of instance)) cluster-node)
                                 (null (logout-at-of instance))))))
           (with-authenticated-session authenticated-session
-            (logout :status :crashed)))
+            (logout/authenticated-session :status :crashed)))
         cluster-node))))
 
 (def (function e) shutdown-cluster-node ()
