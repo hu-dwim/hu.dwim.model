@@ -138,7 +138,7 @@
   (bind ((*authenticated-session* (and *session*
                                        (authenticated-session-of *session*))))
     (authentication.debug "Bound *AUTHENTICATED-SESSION* to ~A from the web session ~A" *authenticated-session* session)
-    (call-next-method)))
+    (call-with-reloaded-authenticated-session #'call-next-method)))
 
 (def method authenticate ((application application-with-persistent-login-support) session (login-data login-data/identifier-and-password))
   (authentication.info "Logging in with authentication information ~A" login-data)
