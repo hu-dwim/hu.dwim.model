@@ -32,6 +32,7 @@
                              (:file "desktop" :depends-on ("persistent-component"))
                              (:file "forum" :depends-on ("audited-object"))
                              (:file "logger" :depends-on ("package"))
+                             (:file "localization" :depends-on ("package"))
                              (:file "package")
                              (:file "persistent-component" :depends-on ("logger"))
                              (:file "persistent-function" :depends-on ("logger"))

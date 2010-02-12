@@ -7,14 +7,11 @@
 (in-package :hu.dwim.model)
 
 (def localization hu
-  (class-name.address "cím")
   (class-name.attachment "csatolás")
   (class-name.audited-object "auditált objektum")
   (class-name.cluster "cluster")
   (class-name.cluster-node "cluster node")
   (class-name.cluster-node-session "cluster node session")
-  (class-name.country "ország")
-  (class-name.county "megye")
   (class-name.desktop "asztal")
   (class-name.encrypted-password-authentication-instrument "jelszavas beléptető eszköz")
   (class-name.object-with-attachments "csatolásokkal renderlező objektum")
@@ -22,9 +19,6 @@
   (class-name.persistent-component "komponens")
   (class-name.persistent-function "függvény")
   (class-name.persistent-log-entry "napló bejegyzés")
-  (class-name.public-place "közterület")
-  (class-name.public-place-type "közterület típus")
-  (class-name.settlement "település")
   (class-name.subject-preferences "beállítások")
   (class-name.topic "téma")
   (class-name.topic-post "bejegyzés")
@@ -49,24 +43,17 @@
   (slot-name.created-in "létrehozva")
   (slot-name.created-instances "létrehozott példányok")
   (slot-name.description "leírás")
-  (slot-name.dialing-code "előhívó szám")
   (slot-name.display-command-labels "parancsikonok szövegének megjelenítése")
-  (slot-name.door "ajtó")
   (slot-name.dynamic-space-usage "dinamikus memória foglaltság")
-  (slot-name.floor-number "emelet")
-  (slot-name.full-address "teljes cím")
   (slot-name.host-name "szerver név")
-  (slot-name.house-number "házszám")
   (slot-name.last-activity-at "utolsó aktivitás időpontja")
   (slot-name.last-modified-at "utolsó módosítás időpontja")
   (slot-name.last-modified-in "utoljára módosítva")
   (slot-name.last-modified-instances "utoljára módosított példányok")
   (slot-name.last-started-session "legutóbbi üzemelés")
-  (slot-name.latitude "szélességi fok")
   (slot-name.level "szint")
   (slot-name.load-average "terhelés")
   (slot-name.logged-at "bejegyezés időpontja")
-  (slot-name.longitude "hosszúsági fok")
   (slot-name.mail-relay-host-name "mail szerver neve")
   (slot-name.maximum-drill-down-depth "maximális lefúrási mélység")
   (slot-name.mime-type "MIME típus")
@@ -78,7 +65,6 @@
   (slot-name.publish-at "megjelenés ideje")
   (slot-name.requested-operation-mode "működési mód")
   (slot-name.salt "jelszó só")
-  (slot-name.short-address "rövid cím")
   (slot-name.shutdown-at "leállítás időpontja")
   (slot-name.startup-at "elindítás időpontja")
   (slot-name.subject "alany")
@@ -87,37 +73,4 @@
   (slot-name.title "cím")
   (slot-name.web-session-count "web session-ök száma")
   (slot-name.web-worker-count "web feldolgozók száma")
-  (slot-name.zip-code "irányítószám")
-  (topic-post.subject "tárgy")
-  (short-address (address)
-    ;; TODO these slobops shouldn't be needed, fix slots instead
-    (bind ((public-place (when (slot-boundp address 'public-place) (public-place-of address)))
-           (settlement (when (slot-boundp public-place 'settlement) (settlement-of public-place))))
-      (string+ (name-of settlement)
-               ", "
-               (when public-place
-                 (name-of public-place))
-               " "
-               (when public-place
-                 (name-of (public-place-type-of public-place)))
-               " "
-               (when address
-                 (princ-to-string (house-number-of address))))))
-  (full-address (address)
-    (bind ((public-place (public-place-of address))
-           (settlement (settlement-of public-place)))
-      (string+ (name-of (country-of (county-of settlement)))
-               " "
-               (princ-to-string (zip-code-of settlement))
-               " "
-               (name-of settlement)
-               ", "
-               (name-of public-place)
-               " "
-               (name-of (public-place-type-of public-place))
-               " "
-               (princ-to-string (house-number-of address))
-               " "
-               (princ-to-string (floor-number-of address))
-               "/"
-               (princ-to-string (door-of address))))))
+  (slot-name.zip-code "irányítószám"))

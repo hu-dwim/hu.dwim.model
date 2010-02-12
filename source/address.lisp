@@ -34,3 +34,5 @@
 (def association
   ((:slot addresses :type (set address))
    (:slot public-place :type public-place :primary #t)))
+
+(def localization-loader-callback model-address-localization-loader :hu.dwim.model.address "localization/address/")
