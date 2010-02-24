@@ -19,7 +19,7 @@
     :primary #t
     :reference #t
     :compute-as (bind ((requested-operation-modes (mapcar 'requested-operation-mode-of (cluster-nodes-of -self-))))
-                  (if (apply 'all-the-same? requested-operation-modes)
+                  (if (apply 'all-eq requested-operation-modes)
                       (first requested-operation-modes)
                       :mixed))
     :documentation "The mixture of the requested operation modes of the cluster's nodes.")
@@ -223,6 +223,7 @@
       (setf *cluster-node-web-server* nil)
       (setf *cluster-node-current-operation-mode* nil))))
 
+;; TODO: this needs to be called from wui server when activity happens in an authenticated session
 (def (function e) notify-cluster-node-activity ()
   (cluster.debug "Registering cluster node activity")
   (assert-cluser-node-is-running)
@@ -271,3 +272,64 @@
 (def (function e) machine-load-in-percent ()
   (bind ((load (parse-number:parse-number (second (cl-ppcre:split " " (alexandria:read-file-into-string "/proc/loadavg"))))))
     (round (* load 100))))
+
+;;;;;;
+;;; Presentation
+
+(def (component e) cluster/detail/inspector (inspector/style)
+  ((cluster :type component)
+   (cluster-nodes :type components)))
+
+(def refresh-component cluster/detail/inspector
+  (bind (((:slots cluster cluster-nodes component-value) -self-))
+    (setf cluster (make-value-viewer component-value)
+          cluster-nodes (make-value-viewer (cluster-nodes-of component-value)))))
+
+(def render-xhtml cluster/detail/inspector ()
+  (bind (((:slots cluster cluster-nodes) -self-))
+    <div ,(render-component cluster)
+         ,(render-component cluster-nodes)>))
+
+(def layered-function make-cluster-commands (component class prototype instance)
+  (:method ((component cluster/detail/inspector) (class entity) (prototype cluster) (instance cluster))
+    ;; TODO:
+    ))
+
+(def layered-method make-command-bar-commands ((component t/inspector) (class entity) (prototype cluster) (instance cluster))
+  (append (call-next-layered-method) (make-cluster-commands component class prototype instance)))
+
+(def layered-method make-command-bar-commands ((component t/inspector) (class entity) (prototype cluster-node) (instance cluster-node))
+  (append (call-next-layered-method) (make-cluster-node-commands component class prototype instance)))
+
+(def layered-method make-context-menu-items ((component t/row/inspector) (class entity) (prototype cluster-node) (instance cluster-node))
+  (list* (make-menu-item "Cluster node" (make-cluster-node-commands component class instance prototype)) (call-next-layered-method)))
+
+(def layered-method make-command-bar-commands ((component t/row/inspector) (class entity) (prototype cluster-node) (instance cluster-node))
+  (list* (make-menu-item "Cluster node" (make-cluster-node-commands component class instance prototype)) (call-next-layered-method)))
+
+(def layered-function make-cluster-node-commands (component class prototype instance)
+  (:method ((component inspector/abstract) (class entity) (prototype cluster-node) (instance cluster-node))
+    (hu.dwim.wui::optional-list (make-restart-cluster-node-command component class prototype instance)
+                                (make-startup-cluster-node-command component class prototype instance)
+                                (make-shutdown-cluster-node-command component class prototype instance))))
+
+(def layered-function make-restart-cluster-node-command (component class prototype instance)
+  (:method ((component inspector/abstract) (class entity) (prototype cluster-node) (instance cluster-node))
+    (command/widget ()
+      (icon restart-cluster-node)
+      (make-action
+        (not-yet-implemented)))))
+
+(def layered-function make-startup-cluster-node-command (component class prototype instance)
+  (:method ((component inspector/abstract) (class entity) (prototype cluster-node) (instance cluster-node))
+    (command/widget ()
+      (icon startup-cluster-node)
+      (make-action
+        (not-yet-implemented)))))
+
+(def layered-function make-shutdown-cluster-node-command (component class prototype instance)
+  (:method ((component inspector/abstract) (class entity) (prototype cluster-node) (instance cluster-node))
+    (command/widget ()
+      (icon shutdown-cluster-node)
+      (make-action
+        (not-yet-implemented)))))

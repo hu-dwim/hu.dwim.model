@@ -7,7 +7,8 @@
 (in-package :hu.dwim.util)
 
 (def package :hu.dwim.model
-  (:use :hu.dwim.asdf
+  (:use :contextl
+        :hu.dwim.asdf
         :hu.dwim.common
         :hu.dwim.def
         :hu.dwim.defclass-star
@@ -18,6 +19,4 @@
         :hu.dwim.util
         :hu.dwim.wui
         :local-time)
-  (:readtable-setup
-   (enable-standard-hu.dwim-syntaxes)
-   (hu.dwim.syntax-sugar:enable-lambda-with-bang-args-syntax)))
+  (:readtable-setup (setup-readtable/same-as-package :hu.dwim.wui)))
