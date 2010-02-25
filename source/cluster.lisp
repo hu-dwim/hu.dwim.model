@@ -19,7 +19,7 @@
     :primary #t
     :reference #t
     :compute-as (bind ((requested-operation-modes (mapcar 'requested-operation-mode-of (cluster-nodes-of -self-))))
-                  (if (apply 'all-eq requested-operation-modes)
+                  (if (all-the-same? requested-operation-modes)
                       (first requested-operation-modes)
                       :mixed))
     :documentation "The mixture of the requested operation modes of the cluster's nodes.")
