@@ -291,7 +291,7 @@
          ,(render-component cluster-nodes)>))
 
 (def layered-function make-cluster-commands (component class prototype instance)
-  (:method ((component cluster/detail/inspector) (class entity) (prototype cluster) (instance cluster))
+  (:method ((component inspector/abstract) (class entity) (prototype cluster) (instance cluster))
     ;; TODO:
     ))
 
