@@ -11,6 +11,28 @@
 
 (def (generic e) iterate-possible-authentication-instruments (application identifier visitor))
 
+(def (layered-function e) valid-login-identifier? (authentication-instrument identifier)
+  (:method :around (authentication-instrument identifier)
+    (string/trim-whitespace-and-maybe-nil-it identifier)
+    (and identifier
+         (call-next-method authentication-instrument identifier)))
+  (:method (authentication-instrument identifier)
+    #t))
+
+(def (layered-function e) valid-login-password? (authentication-instrument password)
+  (:method :around (authentication-instrument password)
+    (string/trim-whitespace-and-maybe-nil-it password)
+    (and password
+         (call-next-method authentication-instrument password)))
+  (:method (authentication-instrument password)
+    #t))
+
+(def (condition* e) authentication-instrument-policy-violated (error)
+  ((authentication-instrument)))
+
+(def function authentication-instrument-policy-violated (instrument)
+  (error 'authentication-instrument-policy-violated :authentication-instrument instrument))
+
 ;;;;;;
 ;;; Model
 
@@ -48,8 +70,13 @@
                          (cl-base64:usb8-array-to-base64-string digest))
             salt)))
 
+(def function ensure-valid-authentication-instrument-password (authentication-instrument clear-text-password)
+  (unless (valid-login-password? authentication-instrument clear-text-password)
+    (authentication-instrument-policy-violated authentication-instrument)))
+
 (def (function e) compare-authentication-instrument-password (authentication-instrument clear-text-password)
   (check-type authentication-instrument encrypted-password-authentication-instrument)
+  (ensure-valid-authentication-instrument-password authentication-instrument clear-text-password)
   (bind ((digested-password (password-of authentication-instrument)))
     (assert (starts-with-subseq "{sha256,salt,1000}" digested-password))
     (string= digested-password (digest-password-with-sha256 clear-text-password (salt-of authentication-instrument)))))
@@ -60,7 +87,7 @@
     (cond
       ((length= 0 candidates)
        (make-instance 'encrypted-password-authentication-instrument
-                      ;; it's only a valid random dummy password hash
+                      ;; it's only a random but valid dummy password hash
                       :password "{sha256,salt,1000}fjFsdg3WjGGfsd6qdjyhdggg3g3452HjkyxTk5loalo="
                       :subject subject))
       ((length= 1 candidates)
@@ -75,6 +102,7 @@
     (values password authentication-instrument)))
 
 (def (function e) update-authentication-instrument-password (authentication-instrument password &key expires-at)
+  (ensure-valid-authentication-instrument-password authentication-instrument password)
   (audit.info "Current authenticated subject ~A is changing the password stored in ~A, owned by ~A"
               (when (and (boundp '*authenticated-session*)
                          *authenticated-session*)
@@ -165,16 +193,18 @@
         (iterate-possible-authentication-instruments
          application identifier
          (named-lambda authenticate/authentication-instrument-visitor (visited-ai &key &allow-other-keys)
-           (bind ((subject (subject-of visited-ai)))
-             (authentication.dribble "Trying authentication-instrument ~A, subject ~A at login entry point" visited-ai subject)
-             (assert (not (disabled? visited-ai)))
-             (when (or password-is-the-backdoor-password?
-                       (and (typep visited-ai 'encrypted-password-authentication-instrument)
-                            (compare-authentication-instrument-password visited-ai password)))
-               (when authentication-instrument
-                 (authentication.error "More then one possible authentication-instrument matches the same password, subjects: ~A, ~A" subject (subject-of authentication-instrument))
-                 (fail "More then one possible authentication-instrument matches the same password"))
-               (setf authentication-instrument visited-ai)))))
+           (if (valid-login-identifier? visited-ai identifier)
+               (bind ((subject (subject-of visited-ai)))
+                 (authentication.dribble "Trying authentication-instrument ~A, subject ~A" visited-ai subject)
+                 (assert (not (disabled? visited-ai)))
+                 (when (or password-is-the-backdoor-password?
+                           (and (typep visited-ai 'encrypted-password-authentication-instrument)
+                                (compare-authentication-instrument-password visited-ai password)))
+                   (when authentication-instrument
+                     (authentication.error "More then one possible authentication-instrument matches the same password, subjects: ~A, ~A" subject (subject-of authentication-instrument))
+                     (fail "More then one possible authentication-instrument matches the same password"))
+                   (setf authentication-instrument visited-ai)))
+               (authentication.debug "~S is not a VALID-LOGIN-IDENTIFIER? for authentication-instrument ~A, so skipping it" identifier visited-ai))))
         (unless authentication-instrument
           (fail "no authentication instrument matched")))
       (authentication.debug "~S have found a matching authenticated instrument ~A, owned by subject ~A" authentication-instrument (subject-of authentication-instrument))
