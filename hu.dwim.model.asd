@@ -27,7 +27,6 @@
                 :components ((:file "attachment" :depends-on ("audited-object"))
                              (:file "audited-object" :depends-on ("logger"))
                              (:file "authentication" :depends-on ("cluster"))
-                             (:file "authorization" :depends-on ("logger"))
                              (:file "cluster" :depends-on ("audited-object"))
                              (:file "desktop" :depends-on ("persistent-component"))
                              (:file "forum" :depends-on ("audited-object"))
