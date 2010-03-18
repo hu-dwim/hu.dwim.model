@@ -228,70 +228,50 @@
   (subject authenticated-session authentication-instrument encrypted-password-authentication-instrument)
   :documentation "A rendszer által azonosítható alanyok a számukra egyedi jelszavas beléptető eszközzel léphetnek be, ami minden alkalommal regisztrálásra kerül.")
 
-#+nil ;; TODO
-(
-(def (function e) select-count-of-authenticated-sessions (start-timestamp end-timestamp granularity)
-  (check-type granularity (member :sec :minute :hour :day :month :year))
-  (bind ((truncated-start (timestamp-truncate start-timestamp :unit granularity))
-         (truncated-end (timestamp-truncate end-timestamp :unit granularity))
-         (count-of-units (1+ (timestamp-difference truncated-end truncated-start :unit granularity)))
-         (sessions (select ((login-at-of session) (logout-at-of session))
-                     (from (session authenticated-session))
-                     (where (and (timestamp>= end-timestamp (login-at-of session))
-                                 (timestamp>= (logout-at-of session) start-timestamp)))
-                     (order-by :ascending (login-at-of session))))
-         (counts (make-array count-of-units :element-type 'integer :initial-element 0)))
-    (iter (for i index-of-vector counts)
-          (for timestamp =
-               (bind (((:values nsec sec day timezone)
-                       (local-time::%offset-timestamp-part truncated-start granularity i)))
-                 (make-timestamp :day day :sec sec :nsec nsec :timezone timezone)))
-          (setf (aref counts i)
-                (vector timestamp 0)))
-    (iter (for session in sessions)
-          (for start-index = (max 0 (timestamp-difference (first session) truncated-start
-                                                           :unit granularity)))
-          (for end-index = (min (1- count-of-units) (timestamp-difference (second session) truncated-start
-                                                                           :unit granularity)))
-          (iter (for i from start-index to end-index)
-                (incf (aref (aref counts i) 1))))
-    counts))
+;;;;;;
+;;; Specialized authenticated-session inspector for displaying the authentication status and logout buttons in the header of the gui
 
-;;; TODO: move these to local-time, check all call sites, too!
-(def function timestamp-difference (time-a time-b &key (unit :year))
-  "Returns the difference between the two timestamp in the given UNITS. The result is always an integer."
-  (declare (type timestamp time-b time-a))
-  (let ((time-b (local-time::adjust-to-timezone time-b (timezone-of time-a) (make-timestamp))))
-    (ecase unit
-      ((:year :month)
-       (multiple-value-bind (year-a month-a) (local-time::timestamp-decode-date time-a)
-         (multiple-value-bind (year-b month-b) (local-time::timestamp-decode-date time-b)
-           (let ((year (- year-a year-b))
-                 (month (- month-a month-b)))
-             (case unit
-               (:year year)
-               (:month (+ (* 12 year) month)))))))
-      ((:day :hour :minute :sec)
-       (let ((second (- (sec-of time-a) (sec-of time-b)))
-             (day (- (day-of time-a) (day-of time-b))))
-         (case unit
-           (:week (truncate day +days-per-week+))
-           (:day day)
-           (:hour (+ (truncate second +seconds-per-hour+) (* day +hours-per-day+)))
-           (:minute (+ (truncate second +seconds-per-minute+) (* day +minutes-per-day+)))
-           (:sec (+ second (* day +seconds-per-day+)))))))))
+(def (component e) authenticated-session/status/inspector (inspector/style)
+  ((logout-command                   nil :type (or null component))
+   (cancel-impersonalization-command nil :type (or null component))
+   (effective-subject-inspector      nil :type (or null component)))
+  (:default-initargs :component-value *authenticated-session*))
 
-(def function timestamp-truncate (time &key (unit :year))
-  "Truncates TIME to the specified UNIT by clearing its smaller fields."
-  (declare (type timestamp time))
-  (multiple-value-bind (nsec sec minute hour day month year day-of-week)
-      (decode-timestamp time)
-    (declare (ignore nsec day-of-week))
-    (ecase unit
-      (:year (encode-timestamp 0 0 0 0 1 1 year :offset 0))
-      (:month (encode-timestamp 0 0 0 0 1 month year :offset 0))
-      (:day (encode-timestamp 0 0 0 0 day month year :offset 0))
-      (:hour (encode-timestamp 0 0 0 hour day month year :offset 0))
-      (:minute (encode-timestamp 0 0 minute hour day month year :offset 0))
-      (:sec (encode-timestamp 0 sec minute hour day month year :offset 0)))))
-)
+(def constructor (authenticated-session/status/inspector component-value)
+  (assert (eq component-value *authenticated-session*) ()
+          "The ~S component only works for the current *AUTHENTICATED-SESSION*. Please don't provide a :component-value initarg!"
+          'authenticated-session/status/inspector))
+
+(def refresh-component authenticated-session/status/inspector
+  (bind (((:slots logout-command cancel-impersonalization-command effective-subject-inspector) -self-))
+    (if effective-subject-inspector
+        (setf (component-value-of effective-subject-inspector) (effective-subject-of *authenticated-session*))
+        (setf effective-subject-inspector (make-value-inspector (effective-subject-of *authenticated-session*)
+                                                                    :initial-alternative-type 't/reference/presentation)))
+    (unless logout-command
+      (setf logout-command (make-logout-command *application*)))
+    (unless cancel-impersonalization-command
+      (setf cancel-impersonalization-command (make-cancel-impersonalization-command))
+      (setf (visible-component? cancel-impersonalization-command)
+            (delay (not (eq (authenticated-subject-of *authenticated-session*)
+                            (effective-subject-of *authenticated-session*))))))))
+
+(def render-xhtml authenticated-session/status/inspector
+  (bind (((:slots logout-command cancel-impersonalization-command effective-subject-inspector) -self-))
+    (with-render-style/abstract (-self-)
+      (render-component effective-subject-inspector)
+      (render-component logout-command)
+      (render-component cancel-impersonalization-command))))
+
+(def function make-cancel-impersonalization-command ()
+  (command/widget (:ajax #f)
+    (icon cancel-impersonalization)
+    (make-action
+      (assert (not (eq (authenticated-subject-of *authenticated-session*)
+                       (effective-subject-of *authenticated-session*))))
+      (if (valid-authenticated-session? *authenticated-session*)
+          (progn
+            (cancel-impersonalization/authenticated-session)
+            (invalidate-cached-instance *authenticated-session*))
+          (error "Cannot cancel impersonalization, authenticated session ~A is not valid (anymore?)" *authenticated-session*))
+      (values))))
