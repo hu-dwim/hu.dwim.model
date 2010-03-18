@@ -80,3 +80,10 @@
   (slot-name.web-session-count "web session count")
   (slot-name.web-worker-count "web worker count")
   (slot-name.zip-code "zip code"))
+
+;;;;;;
+;;; authorization
+
+(def localization en
+  (icon-label.cancel-impersonalization "Cancel impersonalization")
+  (icon-tooltip.cancel-impersonalization "Stop impersonalizing someone else and show me the application as I normally see it"))

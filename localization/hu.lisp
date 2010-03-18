@@ -80,3 +80,10 @@
   (slot-name.web-session-count "web session-ök száma")
   (slot-name.web-worker-count "web feldolgozók száma")
   (slot-name.zip-code "irányítószám"))
+
+;;;;;;
+;;; authorization
+
+(def localization hu
+  (icon-label.cancel-impersonalization "Megszemélyesítés megszüntetése")
+  (icon-tooltip.cancel-impersonalization "Szűnjön meg a megszemélyesítés, és újból úgy jelenjen meg az alkalmazás, ahogy egyébként én látom belépés után"))
