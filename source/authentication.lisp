@@ -127,39 +127,50 @@
 
 (def method is-logged-in? ((session session-with-persistent-login-support))
   (and (call-next-method)
-       (not (null (authenticated-session-of session)))))
+       (valid-authenticated-session? (authenticated-session-of session))))
 
-(def method login ((application application-with-persistent-login-support) (session session-with-persistent-login-support) login-data)
-  (assert (null (authenticated-session-of session)))
+(def method login ((application application-with-persistent-login-support) (web-session session-with-persistent-login-support) login-data)
+  (assert (null (authenticated-session-of web-session)))
   (assert (boundp '*authenticated-session*))
+  (multiple-value-prog1
+      (call-next-method)
+    (bind ((arguments (extra-arguments-of login-data))
+           ((&key allow-parallel-sessions &allow-other-keys) arguments)
+           (authentication-instrument (load-instance (authenticate-return-value-of web-session)))
+           ((:values authenticated-session failure-reason) (login/authenticated-session authentication-instrument :allow-parallel-sessions allow-parallel-sessions)))
+      (declare (ignore failure-reason))
+      (check-type authenticated-session authenticated-session)
+      (setf (authenticated-session-of web-session) authenticated-session)
+      (setf *authenticated-session* authenticated-session))))
+
+(def method login :around ((application application-with-persistent-login-support) web-session login-data)
   (hu.dwim.meta-model::with-model-database
     (hu.dwim.perec:with-transaction
       (hu.dwim.perec:with-new-compiled-query-cache
-        (multiple-value-prog1
-            (call-next-method)
-          (bind ((arguments (extra-arguments-of login-data))
-                 ((&key allow-parallel-sessions &allow-other-keys) arguments)
-                 (authentication-instrument (load-instance (authenticate-return-value-of session)))
-                 ((:values authenticated-session failure-reason) (login/authenticated-session authentication-instrument :allow-parallel-sessions allow-parallel-sessions)))
-            (declare (ignore failure-reason))
-            (check-type authenticated-session authenticated-session)
-            (setf (http-user-agent-of authenticated-session) (header-value *request* +header/user-agent+))
-            (setf (web-application-of authenticated-session) (human-readable-broker-path *server* application))
-            (setf (remote-ip-address-of authenticated-session) *request-remote-address*)
-            ;; TODO not available here yet (setf (web-session-id-of authenticated-session) ?)
-            (setf (authenticated-session-of session) authenticated-session)
-            (setf *authenticated-session* authenticated-session)))))))
+        (call-next-method)))))
+
+(def method login ((application application-with-persistent-login-support) (web-session null) login-data)
+  (bind ((result-values (multiple-value-list (call-next-method)))
+         (web-session (first result-values))
+         (web-session-id (hu.dwim.wui::id-of web-session))
+         (authenticated-session (authenticated-session-of web-session)))
+    (check-type web-session-id string)
+    (with-reloaded-instance authenticated-session
+      (setf (web-session-id-of authenticated-session) web-session-id)
+      (setf (http-user-agent-of authenticated-session) (header-value *request* +header/user-agent+))
+      (setf (web-application-of authenticated-session) (human-readable-broker-path *server* application))
+      (setf (remote-ip-address-of authenticated-session) *request-remote-address*))
+    (values-list result-values)))
 
 (def method logout ((application application-with-persistent-login-support) (session session-with-persistent-login-support))
-  (assert (boundp '*authenticated-session*))
   (hu.dwim.meta-model::with-model-database
     (hu.dwim.perec:with-transaction
       (hu.dwim.perec:with-new-compiled-query-cache
         (multiple-value-prog1
             (call-next-method)
-          (logout/authenticated-session)
-          (setf (authenticated-session-of session) nil)
-          (setf *authenticated-session* nil))))))
+          (with-authenticated-session (load-instance (authenticated-session-of session))
+            (logout/authenticated-session)
+            (setf (authenticated-session-of session) nil)))))))
 
 (def method call-in-application-environment ((application application-with-persistent-login-support) session thunk)
   ;; TODO maybe we don't even want to bind it if it's not available...
