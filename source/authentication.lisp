@@ -265,7 +265,7 @@
 
 (def function make-cancel-impersonalization-command ()
   (command/widget (:ajax #f)
-    (icon cancel-impersonalization)
+    (icon/widget cancel-impersonalization)
     (make-action
       (assert (not (eq (authenticated-subject-of *authenticated-session*)
                        (effective-subject-of *authenticated-session*))))

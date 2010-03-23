@@ -318,7 +318,7 @@
 (def layered-function make-restart-cluster-node-command (component class prototype instance)
   (:method ((component inspector/abstract) (class entity) (prototype cluster-node) (instance cluster-node))
     (command/widget ()
-      (icon restart-cluster-node)
+      (icon/widget restart-cluster-node)
       (make-action
         (not-yet-implemented)))))
 
@@ -327,7 +327,7 @@
 (def layered-function make-startup-cluster-node-command (component class prototype instance)
   (:method ((component inspector/abstract) (class entity) (prototype cluster-node) (instance cluster-node))
     (command/widget ()
-      (icon startup-cluster-node)
+      (icon/widget startup-cluster-node)
       (make-action
         (not-yet-implemented)))))
 
@@ -336,6 +336,6 @@
 (def layered-function make-shutdown-cluster-node-command (component class prototype instance)
   (:method ((component inspector/abstract) (class entity) (prototype cluster-node) (instance cluster-node))
     (command/widget ()
-      (icon shutdown-cluster-node)
+      (icon/widget shutdown-cluster-node)
       (make-action
         (not-yet-implemented)))))
