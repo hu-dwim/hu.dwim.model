@@ -27,8 +27,8 @@
 
 (def association
   ((:slot authenticated-session :type (or null authenticated-session) :primary #t
-    :initform (when (has-authenticated-session)
-                (current-authenticated-session)))
+    :initform (when (has-authenticated-session?)
+                *authenticated-session*))
    (:slot persistent-log-entries :type (set persistent-log-entry))))
 
 ;;;;;;

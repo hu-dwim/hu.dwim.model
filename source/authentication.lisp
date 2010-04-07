@@ -224,13 +224,12 @@
       authentication-instrument)))
 
 (def method authorize-operation :around ((application application-with-persistent-login-support) form)
-  (bind ((has-authenticated-session? (and (has-authenticated-session)
-                                          *authenticated-session*)))
-    (call-next-method application (append form
-                                          (list :effective-subject (when has-authenticated-session?
-                                                                     (current-effective-subject))
-                                                :authenticated-subject (when has-authenticated-session?
-                                                                         (current-authenticated-subject)))))))
+  (call-next-method application (if (has-authenticated-session?)
+                                    (append form
+                                            (list :effective-subject (current-effective-subject)
+                                                  :authenticated-subject (current-authenticated-subject)))
+                                    form)))
+
 ;;;;;;
 ;;; Diagram
 
@@ -272,8 +271,7 @@
 (def layered-method render-component :before ((self authenticated-session/status/inspector))
   (bind (((:slots component-value) self))
     (when (and (not component-value)
-               (has-authenticated-session)
-               *authenticated-session*)
+               (has-authenticated-session?))
       (setf component-value *authenticated-session*)
       (hu.dwim.wui::ensure-refreshed self))))
 
@@ -312,7 +310,6 @@
 (def render-xhtml login-data-or-authenticated-session/widget
   (bind (((:read-only-slots login-data authenticated-session) -self-))
     (with-render-style/abstract (-self-)
-      (if (and (has-authenticated-session)
-               *authenticated-session*)
+      (if (has-authenticated-session?)
           (render-component authenticated-session)
           (render-component login-data)))))
