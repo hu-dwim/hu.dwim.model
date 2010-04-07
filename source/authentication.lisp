@@ -166,8 +166,8 @@
 
 (def method logout ((application application-with-persistent-login-support) (session session-with-persistent-login-support))
   (hu.dwim.meta-model::with-model-database
-    (hu.dwim.perec:with-transaction
-      (hu.dwim.perec:with-new-compiled-query-cache
+    (with-transaction
+      (with-new-compiled-query-cache
         (multiple-value-prog1
             (call-next-method)
           (with-authenticated-session (load-instance (authenticated-session-of session))
@@ -220,9 +220,17 @@
                (authentication.debug "~S is not a VALID-LOGIN-IDENTIFIER? for authentication-instrument ~A, so skipping it" identifier visited-ai))))
         (unless authentication-instrument
           (fail "no authentication instrument matched")))
-      (authentication.debug "~S have found a matching authenticated instrument ~A, owned by subject ~A" authentication-instrument (subject-of authentication-instrument))
+      (authentication.debug "~S have found a matching authenticated instrument ~A, owned by subject ~A" 'authenticate authentication-instrument (subject-of authentication-instrument))
       authentication-instrument)))
 
+(def method authorize-operation :around ((application application-with-persistent-login-support) form)
+  (bind ((has-authenticated-session? (and (has-authenticated-session)
+                                          *authenticated-session*)))
+    (call-next-method application (append form
+                                          (list :effective-subject (when has-authenticated-session?
+                                                                     (current-effective-subject))
+                                                :authenticated-subject (when has-authenticated-session?
+                                                                         (current-authenticated-subject)))))))
 ;;;;;;
 ;;; Diagram
 
@@ -245,35 +253,66 @@
           'authenticated-session/status/inspector))
 
 (def refresh-component authenticated-session/status/inspector
-  (bind (((:slots logout-command cancel-impersonalization-command effective-subject-inspector) -self-))
-    (if effective-subject-inspector
-        (setf (component-value-of effective-subject-inspector) (effective-subject-of *authenticated-session*))
-        (setf effective-subject-inspector (make-value-inspector (effective-subject-of *authenticated-session*)
+  (bind (((:slots logout-command cancel-impersonalization-command effective-subject-inspector component-value) -self-))
+    (if component-value
+        (if effective-subject-inspector
+            (setf (component-value-of effective-subject-inspector) (effective-subject-of component-value))
+            (setf effective-subject-inspector (make-value-inspector (effective-subject-of component-value)
                                                                     :initial-alternative-type 't/reference/presentation)))
+        (setf effective-subject-inspector nil))
     (unless logout-command
       (setf logout-command (make-logout-command *application*)))
     (unless cancel-impersonalization-command
-      (setf cancel-impersonalization-command (make-cancel-impersonalization-command))
+      (setf cancel-impersonalization-command (make-cancel-impersonalization-command -self- (component-dispatch-class -self-) (component-dispatch-prototype -self-) component-value))
       (setf (visible-component? cancel-impersonalization-command)
-            (delay (not (eq (authenticated-subject-of *authenticated-session*)
-                            (effective-subject-of *authenticated-session*))))))))
+            (delay (and component-value
+                        (not (eq (authenticated-subject-of component-value)
+                                 (effective-subject-of component-value)))))))))
+
+(def layered-method render-component :before ((self authenticated-session/status/inspector))
+  (bind (((:slots component-value) self))
+    (when (and (not component-value)
+               (has-authenticated-session)
+               *authenticated-session*)
+      (setf component-value *authenticated-session*)
+      (hu.dwim.wui::ensure-refreshed self))))
 
 (def render-xhtml authenticated-session/status/inspector
-  (bind (((:slots logout-command cancel-impersonalization-command effective-subject-inspector) -self-))
-    (with-render-style/abstract (-self-)
-      (render-component effective-subject-inspector)
-      (render-component logout-command)
-      (render-component cancel-impersonalization-command))))
+  (bind (((:read-only-slots logout-command cancel-impersonalization-command effective-subject-inspector component-value) -self-))
+    (when component-value
+      (with-render-style/abstract (-self-)
+        (render-component effective-subject-inspector)
+        (render-component logout-command)
+        (render-component cancel-impersonalization-command)))))
 
-(def function make-cancel-impersonalization-command ()
-  (command/widget (:ajax #f)
-    (icon/widget cancel-impersonalization)
-    (make-action
-      (assert (not (eq (authenticated-subject-of *authenticated-session*)
-                       (effective-subject-of *authenticated-session*))))
-      (if (valid-authenticated-session? *authenticated-session*)
-          (progn
-            (cancel-impersonalization/authenticated-session)
-            (invalidate-cached-instance *authenticated-session*))
-          (error "Cannot cancel impersonalization, authenticated session ~A is not valid (anymore?)" *authenticated-session*))
-      (values))))
+(def layered-function make-cancel-impersonalization-command (component class prototype value)
+  (:method ((component authenticated-session/status/inspector) class prototype value)
+    (command/widget (:ajax #f)
+      (icon/widget cancel-impersonalization)
+      (make-action
+        (assert (not (eq (authenticated-subject-of value)
+                         (effective-subject-of value))))
+        (if (valid-authenticated-session? value)
+            (progn
+              (cancel-impersonalization/authenticated-session)
+              (invalidate-cached-instance value))
+            (error "Cannot cancel impersonalization, authenticated session ~A is not valid (anymore?)" value))
+        (values)))))
+
+;;;;;;
+;;; login-data-or-authenticated-session/widget
+
+(def (component e) login-data-or-authenticated-session/widget (widget/style content/abstract)
+  ((login-data (make-instance 'login-data/login/inspector :component-value (make-instance 'login-data/identifier-and-password)) :type component)
+   (authenticated-session (make-instance 'authenticated-session/status/inspector) :type component)))
+
+(def (macro e) login-data-or-authenticated-session/widget (&rest args &key &allow-other-keys)
+  `(make-instance 'login-data-or-authenticated-session/widget ,@args))
+
+(def render-xhtml login-data-or-authenticated-session/widget
+  (bind (((:read-only-slots login-data authenticated-session) -self-))
+    (with-render-style/abstract (-self-)
+      (if (and (has-authenticated-session)
+               *authenticated-session*)
+          (render-component authenticated-session)
+          (render-component login-data)))))
