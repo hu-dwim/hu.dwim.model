@@ -145,9 +145,11 @@
 
 (def method login :around ((application application-with-persistent-login-support) web-session login-data)
   (hu.dwim.meta-model::with-model-database
-    (hu.dwim.perec:with-transaction
-      (hu.dwim.perec:with-new-compiled-query-cache
-        (call-next-method)))))
+    (with-transaction
+      (with-new-compiled-query-cache
+        (call-next-method)))
+    (when (in-transaction-p)
+      (revive-instance *authenticated-session*))))
 
 (def method login ((application application-with-persistent-login-support) (web-session null) login-data)
   (bind ((result-values (multiple-value-list (call-next-method)))
