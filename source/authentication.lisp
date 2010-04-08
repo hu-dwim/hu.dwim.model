@@ -301,8 +301,15 @@
 ;;; login-data-or-authenticated-session/widget
 
 (def (component e) login-data-or-authenticated-session/widget (widget/style content/abstract)
-  ((login-data (make-instance 'login-data/login/inspector :component-value (make-instance 'login-data/identifier-and-password)) :type component)
-   (authenticated-session (make-instance 'authenticated-session/status/inspector) :type component)))
+  ((login-data
+    (make-instance 'login-data/login/inspector
+                   :component-value (make-instance 'login-data/identifier-and-password)
+                   :editable #f
+                   :edited #t)
+    :type component)
+   (authenticated-session
+    (make-instance 'authenticated-session/status/inspector)
+    :type component)))
 
 (def (macro e) login-data-or-authenticated-session/widget (&rest args &key &allow-other-keys)
   `(make-instance 'login-data-or-authenticated-session/widget ,@args))
