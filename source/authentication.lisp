@@ -172,7 +172,8 @@
             (call-next-method)
           (with-authenticated-session (load-instance (authenticated-session-of session))
             (logout/authenticated-session)
-            (setf (authenticated-session-of session) nil)))))))
+            (setf (authenticated-session-of session) nil)
+            (setf *authenticated-session* nil)))))))
 
 (def method call-in-application-environment ((application application-with-persistent-login-support) session thunk)
   ;; TODO maybe we don't even want to bind it if it's not available...
