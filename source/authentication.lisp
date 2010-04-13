@@ -145,11 +145,12 @@
 
 (def method login :around ((application application-with-persistent-login-support) web-session login-data)
   (hu.dwim.meta-model::with-model-database
-    (with-transaction
-      (with-new-compiled-query-cache
-        (call-next-method)))
-    (when (in-transaction-p)
-      (revive-instance *authenticated-session*))))
+    (multiple-value-prog1
+        (with-transaction
+          (with-new-compiled-query-cache
+            (call-next-method)))
+      (when (in-transaction-p)
+        (revive-instance *authenticated-session*)))))
 
 (def method login ((application application-with-persistent-login-support) (web-session null) login-data)
   (bind ((result-values (multiple-value-list (call-next-method)))
@@ -177,8 +178,9 @@
 
 (def method call-in-application-environment ((application application-with-persistent-login-support) session thunk)
   ;; TODO maybe we don't even want to bind it if it's not available...
-  (bind ((*authenticated-session* (and *session*
-                                       (authenticated-session-of *session*))))
+  (bind ((*authenticated-session* (when session
+                                    (authenticated-session-of session))))
+    (check-type *authenticated-session* (or null authenticated-session))
     (authentication.debug "Bound *AUTHENTICATED-SESSION* to ~A from the web session ~A" *authenticated-session* session)
     (call-with-reloaded-authenticated-session #'call-next-method)))
 
