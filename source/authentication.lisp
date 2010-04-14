@@ -27,11 +27,11 @@
   (:method (authentication-instrument password)
     #t))
 
-(def (condition* e) authentication-instrument-policy-violated (error)
+(def (condition* e) error/authentication-instrument-policy-violated (error/authentication)
   ((authentication-instrument)))
 
-(def function authentication-instrument-policy-violated (instrument)
-  (error 'authentication-instrument-policy-violated :authentication-instrument instrument))
+(def function error/authentication-instrument-policy-violated (instrument)
+  (error 'error/authentication-instrument-policy-violated :authentication-instrument instrument))
 
 ;;;;;;
 ;;; Model
@@ -72,7 +72,7 @@
 
 (def function ensure-valid-authentication-instrument-password (authentication-instrument clear-text-password)
   (unless (valid-login-password? authentication-instrument clear-text-password)
-    (authentication-instrument-policy-violated authentication-instrument)))
+    (error/authentication-instrument-policy-violated authentication-instrument)))
 
 (def (function e) compare-authentication-instrument-password (authentication-instrument clear-text-password)
   (check-type authentication-instrument encrypted-password-authentication-instrument)
@@ -126,8 +126,11 @@
   'session-with-persistent-login-support)
 
 (def method is-logged-in? ((session session-with-persistent-login-support))
+  (assert (or (null (authenticated-session-of session))
+              (p-eq (authenticated-session-of session) *authenticated-session*)))
   (and (call-next-method)
-       (valid-authenticated-session? (authenticated-session-of session))))
+       ;; NOTE (authenticated-session-of session) is not alive in the current transaction...
+       (valid-authenticated-session? *authenticated-session*)))
 
 (def method login ((application application-with-persistent-login-support) (web-session session-with-persistent-login-support) login-data)
   (assert (null (authenticated-session-of web-session)))
