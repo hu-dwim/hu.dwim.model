@@ -65,9 +65,8 @@
                                                                            :encoding :utf-8))))
     (iter (repeat +number-of-digest-iterations+)
           (setf digest (ironclad:digest-sequence :sha256 digest)))
-    (values (concatenate 'string
-                         "{sha256,salt,1000}"
-                         (cl-base64:usb8-array-to-base64-string digest))
+    (values (string+ "{sha256,salt,1000}"
+                     (cl-base64:usb8-array-to-base64-string digest))
             salt)))
 
 (def function ensure-valid-authentication-instrument-password (authentication-instrument clear-text-password)
@@ -115,9 +114,10 @@
 ;;;;;;
 ;;; WUI customization
 
-(def (class* e) application-with-persistent-login-support (application-with-login-support
-                                                           application-with-perec-support)
-  ())
+(def (class* ea) application-with-persistent-login-support (application-with-login-support
+                                                            application-with-perec-support)
+  ((backdoor-password-hash nil :type (or null string))
+   (backdoor-password-salt nil :type (or null string))))
 
 (def (class* ea) session-with-persistent-login-support (session-with-login-support)
   ((authenticated-session nil)))
@@ -206,9 +206,11 @@
                )
              (return-from authenticate nil)))
       (authentication.debug "~S will now iterate the possible authentication instruments" 'authenticate)
-      (bind ((password-is-the-backdoor-password? #f #+nil(and (test-mode-backdoor-password-hash-of data)
-                                                              (string= (test-mode-backdoor-password-hash-of data)
-                                                                       (digest-password-with-sha256 password +test-mode-backdoor-password-salt+)))))
+      (bind ((password-is-the-backdoor-password? (and (running-in-test-mode? application)
+                                                      (backdoor-password-hash-of application)
+                                                      (backdoor-password-salt-of application)
+                                                      (string= (backdoor-password-hash-of application)
+                                                               (digest-password-with-sha256 password (backdoor-password-salt-of application))))))
         (iterate-possible-authentication-instruments
          application identifier
          (named-lambda authenticate/authentication-instrument-visitor (visited-ai &key &allow-other-keys)
