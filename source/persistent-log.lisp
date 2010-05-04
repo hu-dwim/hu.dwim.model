@@ -38,27 +38,24 @@
   ())
 
 (def method append-message (logger (appender persistent-appender) level message-control message-arguments)
-  (assert (symbolp level))
-  ;; TODO there should be some assert that we are not in a read-only/rollback-only transaction
+  (check-type level symbol)
   (make-instance 'persistent-log-entry
                  :category (string-downcase (hu.dwim.logger::name-of logger))
                  :level level
-                 :content (if message-arguments
-                              (apply 'format-persistent-log-message message-control message-arguments)
-                              message-control)))
+                 :content (format-message logger appender level nil message-control message-arguments)))
 
-(def function format-persistent-log-message (message &rest args)
+(def method format-message ((logger logger) (appender persistent-appender) level stream message-control message-arguments)
   (cl-l10n:with-locale "en"
-    (bind ((processed-args (mapcar (lambda (arg)
-                                     (typecase arg
-                                       (persistent-object
-                                        (bind ((instance arg)
-                                               (oid (oid-of instance)))
-                                          (assert oid)
-                                          (format nil "`p(~A,~A)" oid (localized-instance-name instance))))
-                                       (t arg)))
-                                   args)))
-      (apply #'format nil message processed-args))))
+    (bind ((processed-arguments (mapcar (lambda (arg)
+                                          (typecase arg
+                                            (persistent-object
+                                             (bind ((instance arg)
+                                                    (oid (oid-of instance)))
+                                               (assert oid)
+                                               (format nil "`p(~A,~A)" oid (localized-instance-name instance))))
+                                            (t arg)))
+                                        message-arguments)))
+      (apply #'format stream message-control processed-arguments))))
 
 (def (function e) split-persistent-log-message (message)
   (declare (type string message))
@@ -81,4 +78,3 @@
              (push (cons (parse-integer oid) textual-representation) result))))))
     (push (subseq message last-end) result)
     (nreverse result)))
-
