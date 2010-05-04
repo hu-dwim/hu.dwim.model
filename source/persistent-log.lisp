@@ -82,8 +82,3 @@
     (push (subseq message last-end) result)
     (nreverse result)))
 
-;; TODO maybe this should be project specific...
-(bind ((persistent-appender (make-instance 'persistent-appender)))
-  (bind ((audit-logger (find-logger 'audit)))
-    (setf (hu.dwim.logger::appenders-of audit-logger) (list (make-instance 'persistent-appender)))
-    (setf (log-level audit-logger) +dribble+)))
