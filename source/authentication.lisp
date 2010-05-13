@@ -246,13 +246,14 @@
   :documentation "A rendszer által azonosítható alanyok a számukra egyedi jelszavas beléptető eszközzel léphetnek be, ami minden alkalommal regisztrálásra kerül.")
 
 ;;;;;;
-;;; Specialized authenticated-session inspector for displaying the authentication status and logout buttons in the header of the gui
+;;; authenticated-session/status/inspector
 
-(def (component e) authenticated-session/status/inspector (inspector/style)
+(def (component e) authenticated-session/status/inspector (t/inspector)
   ((logout-command                   nil :type (or null component))
    (cancel-impersonalization-command nil :type (or null component))
    (effective-subject-inspector      nil :type (or null component)))
-  (:default-initargs :component-value *authenticated-session*))
+  (:default-initargs :component-value *authenticated-session*)
+  (:documentation "Specialized authenticated-session inspector for displaying the authentication status and the logout button."))
 
 (def constructor (authenticated-session/status/inspector component-value)
   (assert (eq component-value *authenticated-session*) ()
@@ -285,7 +286,7 @@
 (def render-xhtml authenticated-session/status/inspector
   (bind (((:read-only-slots logout-command cancel-impersonalization-command effective-subject-inspector component-value) -self-))
     (when component-value
-      (with-render-style/abstract (-self-)
+      (with-render-style/component (-self-)
         (render-component effective-subject-inspector)
         (render-component logout-command)
         (awhen cancel-impersonalization-command
@@ -308,7 +309,7 @@
 ;;;;;;
 ;;; login-data-or-authenticated-session/widget
 
-(def (component e) login-data-or-authenticated-session/widget (widget/style content/abstract)
+(def (component e) login-data-or-authenticated-session/widget (component/widget content/component)
   ((login-data
     (make-instance 'login-data/login/inspector
                    :component-value (make-instance 'login-data/identifier-and-password)
@@ -324,7 +325,7 @@
 
 (def render-xhtml login-data-or-authenticated-session/widget
   (bind (((:read-only-slots login-data authenticated-session) -self-))
-    (with-render-style/abstract (-self-)
+    (with-render-style/component (-self-)
       (if (has-authenticated-session?)
           (render-component authenticated-session)
           (render-component login-data)))))

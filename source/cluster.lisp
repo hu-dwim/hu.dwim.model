@@ -274,9 +274,9 @@
     (round (* load 100))))
 
 ;;;;;;
-;;; Presentation
+;;; cluster/detail/inspector
 
-(def (component e) cluster/detail/inspector (inspector/style)
+(def (component e) cluster/detail/inspector (t/detail/inspector)
   ((cluster :type component)
    (cluster-nodes :type components)))
 
@@ -291,7 +291,7 @@
          ,(render-component cluster-nodes)>))
 
 (def layered-function make-cluster-commands (component class prototype instance)
-  (:method ((component inspector/abstract) (class entity) (prototype cluster) (instance cluster))
+  (:method ((component t/inspector) (class entity) (prototype cluster) (instance cluster))
     ;; TODO:
     ))
 
@@ -308,7 +308,7 @@
   (list* (make-menu-item "Cluster node" (make-cluster-node-commands component class instance prototype)) (call-next-layered-method)))
 
 (def layered-function make-cluster-node-commands (component class prototype instance)
-  (:method ((component inspector/abstract) (class entity) (prototype cluster-node) (instance cluster-node))
+  (:method ((component t/inspector) (class entity) (prototype cluster-node) (instance cluster-node))
     (hu.dwim.wui::optional-list (make-restart-cluster-node-command component class prototype instance)
                                 (make-startup-cluster-node-command component class prototype instance)
                                 (make-shutdown-cluster-node-command component class prototype instance))))
@@ -316,7 +316,7 @@
 (def icon restart-cluster-node)
 
 (def layered-function make-restart-cluster-node-command (component class prototype instance)
-  (:method ((component inspector/abstract) (class entity) (prototype cluster-node) (instance cluster-node))
+  (:method ((component t/inspector) (class entity) (prototype cluster-node) (instance cluster-node))
     (command/widget ()
       (icon/widget restart-cluster-node)
       (make-action
@@ -325,7 +325,7 @@
 (def icon startup-cluster-node)
 
 (def layered-function make-startup-cluster-node-command (component class prototype instance)
-  (:method ((component inspector/abstract) (class entity) (prototype cluster-node) (instance cluster-node))
+  (:method ((component t/inspector) (class entity) (prototype cluster-node) (instance cluster-node))
     (command/widget ()
       (icon/widget startup-cluster-node)
       (make-action
@@ -334,7 +334,7 @@
 (def icon shutdown-cluster-node)
 
 (def layered-function make-shutdown-cluster-node-command (component class prototype instance)
-  (:method ((component inspector/abstract) (class entity) (prototype cluster-node) (instance cluster-node))
+  (:method ((component t/inspector) (class entity) (prototype cluster-node) (instance cluster-node))
     (command/widget ()
       (icon/widget shutdown-cluster-node)
       (make-action
