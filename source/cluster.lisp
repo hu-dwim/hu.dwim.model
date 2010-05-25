@@ -227,7 +227,7 @@
 (def (function e) notify-cluster-node-activity ()
   (cluster.debug "Registering cluster node activity")
   (assert-cluser-node-is-running)
-  (bind ((now (isys:%sys-get-monotonic-time)))
+  (bind ((now (isys:get-monotonic-time)))
     (when (or (not *cluster-node-last-activity*)
               (> (- now *cluster-node-last-activity*) 60))
       (setf *cluster-node-last-activity* now)
