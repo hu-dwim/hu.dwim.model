@@ -34,7 +34,7 @@
   ((:slot topic :type topic)
    (:slot topic-posts :type (set topic-post))))
 
-(def (persistent-singleton e) *root-topic*
+(def (persistent-instance e) *root-topic*
   (select-instance (instance topic)
     (where (null (parent-topic-of instance)))))
 
