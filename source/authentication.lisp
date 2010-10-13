@@ -309,7 +309,9 @@
 ;;;;;;
 ;;; login-data-or-authenticated-session/widget
 
-(def (component e) login-data-or-authenticated-session/widget (component/widget content/component)
+(def (component e) login-data-or-authenticated-session/widget (component/widget
+                                                               content/component
+                                                               style/component)
   ((login-data
     (make-instance 'login-data/login/inspector
                    :component-value (make-instance 'login-data/identifier-and-password)
