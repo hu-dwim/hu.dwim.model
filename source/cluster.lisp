@@ -187,7 +187,7 @@
           (bind ((worker-count (web-worker-count-of cluster-node)))
             (when worker-count
               (cluster.info "Starting up the web server for node ~A with ~S workers" cluster-node worker-count)
-              (funcall (find-symbol "STARTUP-SERVER" :hu.dwim.wui) web-server :initial-worker-count worker-count))))
+              (hu.dwim.web-server:startup-server web-server :initial-worker-count worker-count))))
         (awhen (persistent-process-scheduler-poll-time-of cluster-node)
           (cluster.info "Starting process scheduler for node ~A" cluster-node)
           (start-persistent-process-scheduler it)
@@ -214,7 +214,7 @@
               (setf (status-of *cluster-node-session*) :shutdown)
               ;; TODO expire web sessions
               (awhen *cluster-node-web-server*
-                (funcall (find-symbol "SHUTDOWN-SERVER" :hu.dwim.wui) it))
+                (hu.dwim.web-server:shutdown-server it))
               (when (persistent-process-scheduler-poll-time-of cluster-node)
                 (stop-persistent-process-scheduler)
                 (stop-all-persistent-process-workers))
@@ -236,8 +236,8 @@
           (setf (last-activity-at-of *cluster-node-session*) (transaction-timestamp))
           (setf (load-average-of *cluster-node-session*) (alexandria:read-file-into-string "/proc/loadavg"))
           (setf (dynamic-space-usage-of *cluster-node-session*) (sb-kernel::dynamic-usage))
-          (setf (web-session-count-of *cluster-node-session*) (when *cluster-node-web-server*
-                                                                (funcall (find-symbol "TOTAL-WEB-SESSION-COUNT" :hu.dwim.wui) *cluster-node-web-server*))))))))
+          (setf (web-session-count-of *cluster-node-session*) (awhen *cluster-node-web-server*
+                                                                (hu.dwim.web-server::total-web-session-count it))))))))
 
 #+nil ; TODO: finish
 (def (function e) synchronize-cluster-node ()
@@ -309,9 +309,9 @@
 
 (def layered-function make-cluster-node-commands (component class prototype instance)
   (:method ((component t/inspector) (class entity) (prototype cluster-node) (instance cluster-node))
-    (hu.dwim.wui::optional-list (make-restart-cluster-node-command component class prototype instance)
-                                (make-startup-cluster-node-command component class prototype instance)
-                                (make-shutdown-cluster-node-command component class prototype instance))))
+    (optional-list (make-restart-cluster-node-command component class prototype instance)
+                   (make-startup-cluster-node-command component class prototype instance)
+                   (make-shutdown-cluster-node-command component class prototype instance))))
 
 (def icon restart-cluster-node)
 

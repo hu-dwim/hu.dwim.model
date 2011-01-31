@@ -21,7 +21,7 @@
                :hu.dwim.meta-model
                :hu.dwim.syntax-sugar+hu.dwim.walker
                :hu.dwim.util
-               :hu.dwim.wui+hu.dwim.perec
+               :hu.dwim.presentation+hu.dwim.perec
                :local-time)
   :components ((:module "source"
                 :components ((:file "attachment" :depends-on ("audited-object"))

@@ -158,7 +158,7 @@
 (def method login ((application application-with-persistent-login-support) (web-session null) login-data)
   (bind ((result-values (multiple-value-list (call-next-method)))
          (web-session (first result-values))
-         (web-session-id (hu.dwim.wui::id-of web-session))
+         (web-session-id (hu.dwim.web-server::id-of web-session))
          (authenticated-session (authenticated-session-of web-session)))
     (check-type web-session-id string)
     (with-reloaded-instance authenticated-session
@@ -187,17 +187,17 @@
     (authentication.debug "Bound *AUTHENTICATED-SESSION* to ~A from the web session ~A" *authenticated-session* session)
     (call-with-reloaded-authenticated-session #'call-next-method)))
 
-(def method authenticate ((application application-with-persistent-login-support) session (login-data login-data/identifier-and-password))
+(def method authenticate ((application application-with-persistent-login-support) session (login-data hu.dwim.web-server:login-data/identifier-and-password))
   (authentication.info "Logging in with authentication information ~A" login-data)
   (assert (in-transaction-p))
   (mark-transaction-for-commit-only)
-  (bind ((identifier (identifier-of login-data))
+  (bind ((identifier (hu.dwim.web-server:identifier-of login-data))
          (password (password-of login-data))
          (authentication-instrument nil))
     (flet ((fail (&optional reason)
              (authentication.info "Login failed for authentication information ~A~:[.~;, reason: ~S.~]" login-data reason reason)
              ;; TODO this is subject to DOS attacks due to the persistent log appender
-             (audit.info "Failed authentication using identifier ~S from ip address ~A" (hu.dwim.wui::identifier-of login-data) *request-remote-address/string*)
+             (audit.info "Failed authentication using identifier ~S from ip address ~A" (hu.dwim.web-server:identifier-of login-data) *request-remote-address/string*)
              (when authentication-instrument
                (bind ((failed-attempts (incf (number-of-failed-authentication-attempts-of authentication-instrument))))
                  (when (> failed-attempts +failed-authentication-warning-limit+)
@@ -281,7 +281,7 @@
     (when (and (not component-value)
                (has-authenticated-session?))
       (setf component-value *authenticated-session*)
-      (hu.dwim.wui::ensure-refreshed self))))
+      (hu.dwim.presentation::ensure-refreshed self))))
 
 (def render-xhtml authenticated-session/status/inspector
   (bind (((:read-only-slots logout-command cancel-impersonalization-command effective-subject-inspector component-value) -self-))
@@ -314,7 +314,7 @@
                                                                style/component)
   ((login-data
     (make-instance 'login-data/login/inspector
-                   :component-value (make-instance 'login-data/identifier-and-password)
+                   :component-value (make-instance 'hu.dwim.web-server:login-data/identifier-and-password)
                    :editable #f
                    :edited #t)
     :type component)

@@ -15,8 +15,10 @@
         :hu.dwim.logger
         :hu.dwim.meta-model
         :hu.dwim.perec
+        :hu.dwim.presentation
         :hu.dwim.syntax-sugar
         :hu.dwim.util
-        :hu.dwim.wui
+        :hu.dwim.web-server
         :local-time)
-  (:readtable-setup (setup-readtable/same-as-package :hu.dwim.wui)))
+  (:shadow #:model)
+  (:readtable-setup (setup-readtable/same-as-package :hu.dwim.presentation)))

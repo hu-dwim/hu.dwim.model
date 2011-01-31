@@ -11,7 +11,7 @@
 (defsystem :hu.dwim.model.documentation
   :class hu.dwim.documentation-system
   :depends-on (:hu.dwim.model.test
-               :hu.dwim.wui)
+               :hu.dwim.presentation)
   :components ((:module "documentation"
                 :components ((:file "model" :depends-on ("package"))
                              (:file "package")))))
