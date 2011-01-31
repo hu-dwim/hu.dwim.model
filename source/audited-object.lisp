@@ -58,12 +58,12 @@
                (not (created-p instance)))
       (touch-instance instance #f))))
 
-(def (function e) last-modified-at-of* (instance)
+(def (function e) last-modified-at-of/if-actually-modified (instance)
   (bind ((last-modified-at (last-modified-at-of instance)))
     (unless (timestamp= last-modified-at (created-at-of instance))
       last-modified-at)))
 
-(def (function e) last-modified-in-of* (instance)
+(def (function e) last-modified-in-of/if-actually-modified (instance)
   (bind ((last-modified-in (last-modified-in-of instance)))
     (unless (eq last-modified-in (created-in-of instance))
       last-modified-in)))
