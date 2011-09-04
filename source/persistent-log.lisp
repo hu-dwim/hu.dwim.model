@@ -42,9 +42,9 @@
   (make-instance 'persistent-log-entry
                  :category (string-downcase (hu.dwim.logger::name-of logger))
                  :level level
-                 :content (format-message logger appender level nil message-control message-arguments)))
+                 :content (format-message logger appender nil level nil message-control message-arguments)))
 
-(def method format-message ((logger logger) (appender persistent-appender) level stream message-control message-arguments)
+(def method format-message ((logger logger) (appender persistent-appender) formatter level stream message-control message-arguments)
   (cl-l10n:with-locale "en"
     (bind ((processed-arguments (mapcar (lambda (arg)
                                           (typecase arg
