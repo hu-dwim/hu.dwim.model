@@ -169,7 +169,7 @@
   (setf *cluster-name* cluster-name)
   (setf *cluster-node-web-server* web-server)
   (with-model-database
-    (export-model)
+    (export-persistent-classes-to-database-schema)
     (with-transaction
       (bind ((cluster (select-cluster-by-name cluster-name))
              (cluster-node (select-machine-cluster-node cluster)))
