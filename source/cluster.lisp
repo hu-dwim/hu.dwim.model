@@ -163,6 +163,8 @@
       (where (and (equal (host-name-of instance) host-name)
                   (eq (cluster-of instance) cluster))))))
 
+;; TODO this is bitrotten
+#+nil
 (def (function e) startup-cluster-node (cluster-name &optional web-server)
   (assert (not (is-cluster-node-running?)) nil "Cluster node is already running")
   (cluster.info "Starting up cluster node in cluster ~S" cluster-name)
@@ -202,6 +204,7 @@
             (logout/authenticated-session :status :crashed)))
         cluster-node))))
 
+#+nil
 (def (function e) shutdown-cluster-node ()
   (cluster.info "Shutting down cluster node")
   (assert-cluser-node-is-running)
@@ -239,7 +242,7 @@
           (setf (web-session-count-of *cluster-node-session*) (awhen *cluster-node-web-server*
                                                                 (hu.dwim.web-server::total-web-session-count it))))))))
 
-#+nil ; TODO: finish
+#+nil ; TODO: unfinished and since then also bitrotten
 (def (function e) synchronize-cluster-node ()
   ;; TODO: what about changing the number of workers and other parameters?
   (cluster.info "Synchornizing cluster node")

@@ -147,7 +147,7 @@
       (setf *authenticated-session* authenticated-session))))
 
 (def method login :around ((application application-with-persistent-login-support) web-session login-data)
-  (hu.dwim.meta-model::with-model-database
+  (with-database (database-of application)
     (multiple-value-prog1
         (with-transaction
           (with-new-compiled-query-cache
@@ -169,7 +169,7 @@
     (values-list result-values)))
 
 (def method logout ((application application-with-persistent-login-support) (session session-with-persistent-login-support))
-  (hu.dwim.meta-model::with-model-database
+  (with-database (database-of application)
     (with-transaction
       (with-new-compiled-query-cache
         (multiple-value-prog1
