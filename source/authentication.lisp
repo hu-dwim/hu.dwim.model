@@ -94,6 +94,13 @@
       (t
        (error "Subject ~A has multiple encrypted-password-authentication-instrument's when ensure-encrypted-password-authentication-instrument was called" subject)))))
 
+(def (function e) make-encrypted-password-authentication-instrument (subject password)
+  (bind ((salt (random-string +password-salt-length+)))
+    (make-instance 'encrypted-password-authentication-instrument
+                   :subject subject
+                   :salt salt
+                   :password (digest-password-with-sha256 password salt))))
+
 (def (function e) generate-random-password (subject &key (length 6) alphabet)
   (bind ((password (random-string length (or alphabet +alphanumeric-ascii-alphabet+)))
          (authentication-instrument (ensure-encrypted-password-authentication-instrument subject)))
