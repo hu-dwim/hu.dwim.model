@@ -16,7 +16,6 @@
                :hu.dwim.defclass-star
                :hu.dwim.logger
                :hu.dwim.meta-model
-               :hu.dwim.syntax-sugar+hu.dwim.walker
                :hu.dwim.util
                :hu.dwim.presentation+hu.dwim.perec
                :local-time)
