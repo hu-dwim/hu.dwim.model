@@ -277,11 +277,12 @@
         (setf effective-subject-inspector nil))
     (unless logout-command
       (setf logout-command (make-logout-command *application*)))
-    (if (eq (authenticated-subject-of component-value)
-            (effective-subject-of component-value))
-        (setf cancel-impersonalization-command nil)
-        (unless cancel-impersonalization-command
-          (setf cancel-impersonalization-command (make-cancel-impersonalization-command -self- (component-dispatch-class -self-) (component-dispatch-prototype -self-) component-value))))))
+    (when component-value
+      (if (eq (authenticated-subject-of component-value)
+              (effective-subject-of component-value))
+          (setf cancel-impersonalization-command nil)
+          (unless cancel-impersonalization-command
+            (setf cancel-impersonalization-command (make-cancel-impersonalization-command -self- (component-dispatch-class -self-) (component-dispatch-prototype -self-) component-value)))))))
 
 (def layered-method render-component :before ((self authenticated-session/status/inspector))
   (bind (((:slots component-value) self))
