@@ -124,8 +124,6 @@
   (cluster cluster-node cluster-node-session authenticated-session)
   :documentation "A cluster több számítógép egyetlen elosztott alkalmazásban való együttes felhasználása.")
 
-(def (special-variable e) *production-cluster-node-names*)
-
 (def special-variable *cluster-name* "test")
 
 (def (special-variable e :documentation "The currently running cluster node session or nil") *cluster-node-session* nil)
