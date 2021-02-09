@@ -186,12 +186,12 @@
             (setf (authenticated-session-of session) nil)
             (setf *authenticated-session* nil)))))))
 
-(def method call-in-application-environment ((application application-with-persistent-login-support) session thunk)
+(def method call-in-application-environment ((application application-with-persistent-login-support) web-session thunk)
   ;; TODO maybe we don't even want to bind it if it's not available...
-  (bind ((*authenticated-session* (when session
-                                    (authenticated-session-of session))))
+  (bind ((*authenticated-session* (when web-session
+                                    (authenticated-session-of web-session))))
     (check-type *authenticated-session* (or null authenticated-session))
-    (authentication.debug "Bound *AUTHENTICATED-SESSION* to ~A from the web session ~A" *authenticated-session* session)
+    (authentication.debug "Bound *AUTHENTICATED-SESSION* to ~A from the web session ~A" *authenticated-session* web-session)
     (call-with-reloaded-authenticated-session #'call-next-method)))
 
 (def method authenticate ((application application-with-persistent-login-support) session (login-data hu.dwim.web-server:login-data/identifier-and-password))
